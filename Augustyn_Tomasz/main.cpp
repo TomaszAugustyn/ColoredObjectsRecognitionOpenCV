@@ -10,13 +10,32 @@ using namespace std;
 
 #define M_PI           3.14159265358979323846  /* pi */
 
+
+
+//declarations
+struct AngleAndElemNumber;
+Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc2);
+std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> mc2, Point2f oCenterPoint);
+std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> mc2_related);
+int Partition(std::vector< vector <Point> > &contours_reduced_2, int p, int r);
+int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
+void Quicksort(std::vector< vector <Point> > &contours_reduced_2, int p, int r);
+void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
+std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2);
+std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold);
+std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius);
+void RemoveTooComplicatedContours(std::vector< vector <Point> > &contours_reduced_2);
+std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision);
+
+
+//structure used in sorting algorithm (quicksort)
 struct AngleAndElemNumber
 {
 	double dPolarAngle;
 	int iElementNumber;
 };
 
-Point2f CalculateCenterPointOfPoints( std::vector<Point2f> mc2 )
+Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc2)
 {
 	size_t iNumberOfPoints = mc2.size();
 	float dCenterX = 0, dCenterY = 0;
@@ -36,7 +55,7 @@ Point2f CalculateCenterPointOfPoints( std::vector<Point2f> mc2 )
 
 }
 
-std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint( std::vector<Point2f> mc2, Point2f oCenterPoint )
+std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> mc2, Point2f oCenterPoint)
 {
 	std::vector<Point2f> mc2_related;
 	size_t iNumberOfPoints = mc2.size();
@@ -46,7 +65,7 @@ std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint( std::vector<Point2f> 
 	{
 		temp_point.x = mc2[i].x - oCenterPoint.x;
 		temp_point.y = mc2[i].y - oCenterPoint.y;
-		mc2_related.push_back( temp_point );
+		mc2_related.push_back(temp_point);
 	}
 	return mc2_related;
 
@@ -59,29 +78,29 @@ std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> m
 	AngleAndElemNumber TempStruct;
 	float tempX = 0.0, tempY = 0.0;
 
-	for ( int i = 0; i < iNumberOfPoints; i++ )
+	for (int i = 0; i < iNumberOfPoints; i++)
 	{
 		TempStruct.iElementNumber = i;
 		tempX = mc2_related[i].x;
 		tempY = mc2_related[i].y;
 
-		if ( ( tempX > 0 ) && ( tempY >= 0 ) )
+		if ((tempX > 0) && (tempY >= 0))
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX);
 		}
-		else if ( ( tempX > 0) && (tempY < 0 ) )
+		else if ((tempX > 0) && (tempY < 0))
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX) + 2 * M_PI;
 		}
-		else if ( tempX < 0 )
+		else if (tempX < 0)
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX) + M_PI;
 		}
-		else if ( (tempX == 0) && (tempY > 0) )
+		else if ((tempX == 0) && (tempY > 0))
 		{
 			TempStruct.dPolarAngle = M_PI / 2;
 		}
-		else if ( (tempX == 0) && (tempY < 0) )
+		else if ((tempX == 0) && (tempY < 0))
 		{
 			TempStruct.dPolarAngle = 3 * M_PI / 2;
 		}
@@ -90,16 +109,44 @@ std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> m
 			TempStruct.dPolarAngle = 0;
 		}
 
-		VectorOfAngleAndElem.push_back( TempStruct );
+		VectorOfAngleAndElem.push_back(TempStruct);
 	}
 
 	return VectorOfAngleAndElem;
 }
 
-int Partition( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r ) // dzielimy tablice na dwie czesci, w pierwszej wszystkie liczby sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+// dzielimy wektor na dwie czesci, w pierwszej rozmiar wektora punktów jest mniejszy badz rowny x, w drugiej wiekszy lub rowny od x
+int Partition(std::vector< vector <Point> > &contours_reduced_2, int p, int r)
+{
+	int x = contours_reduced_2[p].size(); // obieramy x
+	int i = p, j = r; // i, j - indeksy wektora konturow
+	vector <Point> w; // pojedynczy kontur (wektor punktow)
+	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
+	{
+		while (contours_reduced_2[j].size() > x) // dopoki elementy sa wieksze od x
+			j--;
+		while (contours_reduced_2[i].size() < x) // dopoki elementy sa mniejsze od x
+			i++;
+		if (i < j) // zamieniamy miejscami gdy i < j
+		{
+			w = contours_reduced_2[i];
+			contours_reduced_2[i] = contours_reduced_2[j];
+			contours_reduced_2[j] = w;
+			i++;
+			j--;
+		}
+		else // gdy i >= j zwracamy j jako punkt podzialu tablicy
+			return j;
+	}
+}
+
+
+//Overloaded partition function
+// dzielimy strukturê na dwie czesci, w pierwszej wszystkie rozmiary katow sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r)
 {
 	double x = VectorOfAngleAndElem[p].dPolarAngle; // obieramy x
-	int i = p, j = r, index; // i, j - indeksy w tabeli
+	int i = p, j = r, index; // i, j - indeksy w strukturze
 	double w;
 	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
 	{
@@ -125,18 +172,33 @@ int Partition( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int
 	}
 }
 
-void Quicksort( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r ) // sortowanie szybkie
+// sortowanie szybkie
+void Quicksort(std::vector< vector <Point> > &contours_reduced_2, int p, int r)
 {
 	int q;
 	if (p < r)
 	{
-		q = Partition(VectorOfAngleAndElem, p, r); // dzielimy tablice na dwie czesci; q oznacza punkt podzialu
-		Quicksort(VectorOfAngleAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci tablicy
-		Quicksort(VectorOfAngleAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci tablicy
+		q = Partition(contours_reduced_2, p, r); // dzielimy wektor konturow na dwie czesci; q oznacza punkt podzialu
+		Quicksort(contours_reduced_2, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci wektora
+		Quicksort(contours_reduced_2, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci wektora
 	}
 }
 
-std::vector<Point2f> EnumerateVerticiesClockwise( std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2 )
+//Overloaded quicksort algorithm
+// sortowanie szybkie
+void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r)
+{
+	int q;
+	if (p < r)
+	{
+		q = Partition(VectorOfAngleAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
+		Quicksort(VectorOfAngleAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
+		Quicksort(VectorOfAngleAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
+	}
+}
+
+
+std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2)
 {
 	size_t iNumberOfPoints = VectorOfAngleAndElem.size();
 	std::vector<Point2f> mc2_clockwise;
@@ -148,10 +210,80 @@ std::vector<Point2f> EnumerateVerticiesClockwise( std::vector<AngleAndElemNumber
 		ElementNr = VectorOfAngleAndElem[i].iElementNumber;
 		TempPoint.x = mc2[ElementNr].x;
 		TempPoint.y = mc2[ElementNr].y;
-		mc2_clockwise.push_back( TempPoint );
+		mc2_clockwise.push_back(TempPoint);
 	}
 
 	return mc2_clockwise;
+}
+
+std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold)
+{
+	double area0;
+	vector< vector <Point> > contours_reduced;
+
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		vector<Point> contour = contours[i];
+		area0 = contourArea(contour);
+		if (area0 >= dLowerAreaThreshold && area0 <= dHigherAreaThreshold)
+		{
+			contours_reduced.push_back(contour);
+		}
+	}
+
+	return contours_reduced;
+}
+
+std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius)
+{
+	vector< vector <Point> > contours_reduced_2;
+	Point2f center;
+	float radius = 0.0;
+
+	if (contours_reduced.size() > 4)
+	{
+		for (size_t i = 0; i < contours_reduced.size(); i++)
+		{
+			vector<Point> contour = contours_reduced[i];
+			minEnclosingCircle(contour, center, radius);
+			if (radius > MinimumRadius)
+			{
+				contours_reduced_2.push_back(contour);
+			}
+		}
+		return contours_reduced_2;
+	}
+	else
+	{
+		return contours_reduced;
+	}
+}
+
+void RemoveTooComplicatedContours(std::vector< vector <Point> > &contours_reduced_2)
+{
+	if (contours_reduced_2.size() > 4)
+	{
+		Quicksort(contours_reduced_2, 0, (int)contours_reduced_2.size() - 1);
+		for (size_t i = contours_reduced_2.size() - 1; i >= 4; i--)
+		{
+			contours_reduced_2.erase(contours_reduced_2.begin() + i);
+		}
+	}
+}
+
+std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision)
+{
+	vector< vector <Point> > contours_approxed;
+	vector<Point> contour_approx;
+
+	for (size_t i = 0; i < contours_reduced_2.size(); i++)
+	{
+		vector<Point> contour = contours_reduced_2[i];
+		approxPolyDP(contour, contour_approx, precision, true);
+		contours_approxed.push_back(contour_approx);
+	}
+
+	return contours_approxed;
 }
 
 int main(int, char)
@@ -161,14 +293,14 @@ int main(int, char)
 	string pojedyncza_linia;
 	fstream plik;
 	plik.open("nazwy_zdjec/nazwy_zdjec.txt", ios::in);
-	if ( plik.good() == false )
+	if (plik.good() == false)
 	{
 		cout << "Podany plik nie istnieje lub podales bledna sciezke!" << endl;
 		exit(0);
 	}
-	while ( getline( plik, pojedyncza_linia ) )
+	while (getline(plik, pojedyncza_linia))
 	{
-		nazwy_obrazkow.push_back( pojedyncza_linia );
+		nazwy_obrazkow.push_back(pojedyncza_linia);
 	}
 	plik.close();
 
@@ -176,82 +308,111 @@ int main(int, char)
 	//ladowanie obrazkow do wektora Mat i skalowanie ich
 	vector <Mat> frames;
 	Mat temp_frame;
-	for ( size_t i = 0; i < nazwy_obrazkow.size(); i++ )
+	for (size_t i = 0; i < nazwy_obrazkow.size(); i++)
 	{
-		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i] , CV_LOAD_IMAGE_GRAYSCALE);
+		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i], CV_LOAD_IMAGE_GRAYSCALE);
 		Mat resized;
 
 		if (temp_frame.rows <= temp_frame.cols)
 		{
 			resized.create(1170, 2080, temp_frame.type());
-			
+
 		}
 		else
 		{
 			Mat resized(2080, 1170, temp_frame.type());
 		}
-		
+
 		cv::resize(temp_frame, resized, resized.size());
 		frames.push_back(resized);
 	}
 
 
-
-	Mat frame, threshold_img, element, dilation_dst, dest_img, transform_matrix, erode_dst;
+	Mat threshold_img, element, dilation_dst, dest_img, transform_matrix, erode_dst;
 	int dilation_size = 3;
 	vector< vector <Point> > contours;
+	vector< vector <Point> > contours_reduced;
+	vector< vector <Point> > contours_reduced_2;
+	vector< vector <Point> > contours_approxed;
+	vector <double> areas;
+	double area0 = 0;
+	Point2f center;
+	float radius = 0.0;
+	double dLowerAreaThreshold = 0;
 	namedWindow("okno", 1);
 	namedWindow("okno2", 1);
-	frame = imread("zelki.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	threshold(frames[0], threshold_img, 30, 255, THRESH_BINARY);
 
-	element = getStructuringElement(MORPH_ELLIPSE,
-		Size(2 * dilation_size + 1, 2 * dilation_size + 1),
-		Point(dilation_size, dilation_size));
+	for (int i = 0; i <= 4; i++)
+	{
+		threshold(frames[13], threshold_img, 36 - i, 255, THRESH_BINARY);
 
-	dilate(threshold_img, dilation_dst, element, cv::Point(-1,-1), 3);
-	erode(dilation_dst, erode_dst, element);
+		element = getStructuringElement(MORPH_ELLIPSE,
+			Size(2 * dilation_size + 1, 2 * dilation_size + 1),
+			Point(dilation_size, dilation_size));
 
-	findContours(erode_dst, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+		dilate(threshold_img, dilation_dst, element, cv::Point(-1, -1), 3);
+		erode(dilation_dst, erode_dst, element, cv::Point(-1, -1), 2);
+
+		findContours(erode_dst, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+
+		if (i == 0)
+			dLowerAreaThreshold = 750;
+		else
+			dLowerAreaThreshold = 400;
+
+		contours_reduced = RemoveSmallAndBigContours(contours, dLowerAreaThreshold, 18000);
+		if (contours_reduced.size() <= 4)
+		{
+			break;
+		}
+	}
+
+	contours_reduced_2 = RemoveObjEnclosingCircleLessThen(contours_reduced, 27);
+	RemoveTooComplicatedContours(contours_reduced_2);
+
+	for (size_t i = 0; i < contours_reduced_2.size(); i++)
+	{
+		vector<Point> contour = contours_reduced_2[i];
+
+		area0 = contourArea(contour);
+		areas.push_back(area0);
+	}
+
+	contours_approxed = ApproximateContours(contours_reduced_2, 7);
 
 	Scalar color(255, 255, 255);
-	for (int i = 1; i < contours.size(); i++)
+	for (int i = 1; i < contours_approxed.size(); i++)
 	{
 		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
-		drawContours(erode_dst, contours, i, color, 2, 8);
+		drawContours(erode_dst, contours_approxed, i, color, 2, 8);
 	}
 
 	/// Get the moments
-	vector<Moments> mu(contours.size());
-	for (int i = 0; i < contours.size(); i++)
+	vector<Moments> mu(contours_reduced_2.size());
+	for (int i = 0; i < contours_reduced_2.size(); i++)
 	{
-		mu[i] = moments(contours[i], false);
+		mu[i] = moments(contours_reduced_2[i], false);
 	}
 
 	///  Get the mass centers:
-	vector<Point2f> mc(contours.size());
-	vector<Point2f> mc2;
+	vector<Point2f> mc2(contours_reduced_2.size());
 	vector<Point2f> mc2_related;
 	Point2f oCenterPoint;
 	vector<AngleAndElemNumber> VectorOfAngleAndElem;
 	vector<Point2f> mc2_clockwise;
 
 
-	for (int i = 0; i < contours.size(); i++)
+	for (int i = 0; i < contours_reduced_2.size(); i++)
 	{
-		mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
+		mc2[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
 	}
 
-	for (int i = 1; i < mc.size(); i++)
-	{
-		mc2.push_back(mc[i]);
-	}
 
-	oCenterPoint = CalculateCenterPointOfPoints( mc2 );
-	mc2_related = RelateVectorOfPointsToTheCenterPoint( mc2, oCenterPoint );
-	VectorOfAngleAndElem = ConvertToPolarCoordinates( mc2_related );
-	Quicksort( VectorOfAngleAndElem, 0, (int)VectorOfAngleAndElem.size() - 1 );
-	mc2_clockwise = EnumerateVerticiesClockwise( VectorOfAngleAndElem, mc2 );
+	oCenterPoint = CalculateCenterPointOfPoints(mc2);
+	mc2_related = RelateVectorOfPointsToTheCenterPoint(mc2, oCenterPoint);
+	VectorOfAngleAndElem = ConvertToPolarCoordinates(mc2_related);
+	Quicksort(VectorOfAngleAndElem, 0, (int)VectorOfAngleAndElem.size() - 1);
+	mc2_clockwise = EnumerateVerticiesClockwise(VectorOfAngleAndElem, mc2);
 
 	vector<Point2f> punktyDocelowe;
 	Point2f p1, p2, p3, p4;
@@ -276,7 +437,7 @@ int main(int, char)
 	punktyDocelowe.push_back(p4);
 
 	transform_matrix = getPerspectiveTransform(mc2_clockwise, punktyDocelowe);
-	warpPerspective(frames[0], dest_img, transform_matrix, Size(800, 500));
+	warpPerspective(frames[13], dest_img, transform_matrix, Size(800, 500));
 	imshow("okno2", erode_dst);
 	imshow("okno", dest_img);
 
