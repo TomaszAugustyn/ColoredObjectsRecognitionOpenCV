@@ -13,24 +13,29 @@ using namespace std;
 //declarations
 struct AngleAndElemNumber;
 struct DistanceAndElemNumber;
+struct AreaAndElemNumber;
+enum JellyColors;
 Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc2);
 std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> mc2, Point2f oCenterPoint);
 std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> mc2_related);
 std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f> mc2, cv::Mat frame);
-//int Partition(std::vector< vector <Point> > &contours_reduced_2, int p, int r);
 int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
 int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r);
-//void Quicksort(std::vector< vector <Point> > &contours_reduced_2, int p, int r);
+int Partition(std::vector<DistanceAndElemNumber> &VectorOfAreaAndElem, int p, int r);
 void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
 void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r);
+void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfAreaAndElem, int p, int r);
 std::vector<Point2f> RemoveContoursFarestFromCenter(std::vector<DistanceAndElemNumber> VectorOfDistAndElem, std::vector<Point2f> mc2, std::vector< vector <Point> > contours_reduced_2, std::vector< vector <Point> > &contours_reduced_3);
 std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2);
 std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold);
 std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius);
-//void RemoveTooComplicatedContours(std::vector< vector <Point> > &contours_reduced_2);
 std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision);
 double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours_approxed);
 std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed);
+std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point> > contours_jelly_reduced);
+double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
+int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
+int CountColorJelly(cv::Mat warp_hsv, int color);
 
 //structure used in sorting algorithm (quicksort)
 struct AngleAndElemNumber
@@ -44,6 +49,23 @@ struct DistanceAndElemNumber
 {
 	double dDistanceToCenter;
 	int iElementNumber;
+};
+
+//structure used in sorting algorithm (quicksort)
+struct AreaAndElemNumber
+{
+	double dArea;
+	int iElementNumber;
+};
+
+enum JellyColors
+{
+	WHITE = 0,
+	YELLOW = 1,
+	ORANGE = 2,
+	LIGHT_RED = 3,
+	DARK_RED = 4,
+	GREEN = 5
 };
 
 Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc3)
@@ -134,8 +156,6 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 	double tempX = 0.0, tempY = 0.0;
 	double CenterX = frame.cols / 2;
 	double CenterY = frame.rows / 2;
-	//float CenterX = 1040;
-	//float CenterY = 585;
 	double distance = 0.0;
 
 
@@ -152,29 +172,6 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 	return VectorOfDistAndElem;
 }
 
-/*int Partition(std::vector< vector <Point> > &contours_reduced_2, int p, int r) // dzielimy wektor na dwie czesci, w pierwszej rozmiar wektora punktów jest mniejszy badz rowny x, w drugiej wiekszy lub rowny od x
-{
-int x = contours_reduced_2[p].size(); // obieramy x
-int i = p, j = r; // i, j - indeksy wektora konturow
-vector <Point> w; // pojedynczy kontur (wektor punktow)
-while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
-{
-while (contours_reduced_2[j].size() > x) // dopoki elementy sa wieksze od x
-j--;
-while (contours_reduced_2[i].size() < x) // dopoki elementy sa mniejsze od x
-i++;
-if (i < j) // zamieniamy miejscami gdy i < j
-{
-w = contours_reduced_2[i];
-contours_reduced_2[i] = contours_reduced_2[j];
-contours_reduced_2[j] = w;
-i++;
-j--;
-}
-else // gdy i >= j zwracamy j jako punkt podzialu tablicy
-return j;
-}
-}*/
 
 //Overloaded partition function
 int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie rozmiary katow sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
@@ -201,13 +198,13 @@ int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int 
 			i++;
 			j--;
 		}
-		else // gdy i >= j zwracamy j jako punkt podzialu tablicy
+		else // gdy i >= j zwracamy j jako punkt podzialu struktury
 			return j;
 	}
 }
 
 //Overloaded partition function
-int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie rozmiary katow sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie odleglosci sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
 {
 	double x = VectorOfDistAndElem[p].dDistanceToCenter; // obieramy x
 	int i = p, j = r, index; // i, j - indeksy w strukturze
@@ -231,22 +228,40 @@ int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, in
 			i++;
 			j--;
 		}
-		else // gdy i >= j zwracamy j jako punkt podzialu tablicy
+		else // gdy i >= j zwracamy j jako punkt podzialu struktury
 			return j;
 	}
 }
 
+//Overloaded partition function
+int Partition(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie powierzchnie sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+{
+	double x = VectorOfAreaAndElem[p].dArea; // obieramy x
+	int i = p, j = r, index; // i, j - indeksy w strukturze
+	double w;
+	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
+	{
+		while (VectorOfAreaAndElem[j].dArea > x) // dopoki elementy sa wieksze od x
+			j--;
+		while (VectorOfAreaAndElem[i].dArea < x) // dopoki elementy sa mniejsze od x
+			i++;
+		if (i < j) // zamieniamy miejscami gdy i < j
+		{
+			w = VectorOfAreaAndElem[i].dArea;
+			index = VectorOfAreaAndElem[i].iElementNumber;
 
-/*void Quicksort(std::vector< vector <Point> > &contours_reduced_2, int p, int r) // sortowanie szybkie
-{
-int q;
-if (p < r)
-{
-q = Partition(contours_reduced_2, p, r); // dzielimy wektor konturow na dwie czesci; q oznacza punkt podzialu
-Quicksort(contours_reduced_2, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci wektora
-Quicksort(contours_reduced_2, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci wektora
+			VectorOfAreaAndElem[i].dArea = VectorOfAreaAndElem[j].dArea;
+			VectorOfAreaAndElem[i].iElementNumber = VectorOfAreaAndElem[j].iElementNumber;
+
+			VectorOfAreaAndElem[j].dArea = w;
+			VectorOfAreaAndElem[j].iElementNumber = index;
+			i++;
+			j--;
+		}
+		else // gdy i >= j zwracamy j jako punkt podzialu struktury
+			return j;
+	}
 }
-}*/
 
 //Overloaded quicksort algorithm
 void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) // sortowanie szybkie
@@ -269,6 +284,18 @@ void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, i
 		q = Partition(VectorOfDistAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
 		Quicksort(VectorOfDistAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
 		Quicksort(VectorOfDistAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
+	}
+}
+
+//Overloaded quicksort algorithm
+void Quicksort(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r) // sortowanie szybkie
+{
+	int q;
+	if (p < r)
+	{
+		q = Partition(VectorOfAreaAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
+		Quicksort(VectorOfAreaAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
+		Quicksort(VectorOfAreaAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
 	}
 }
 
@@ -359,18 +386,6 @@ std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vect
 	}
 }
 
-/*void RemoveTooComplicatedContours( std::vector< vector <Point> > &contours_reduced_2 )
-{
-if (contours_reduced_2.size() > 4)
-{
-Quicksort( contours_reduced_2, 0, (int)contours_reduced_2.size() - 1 );
-for ( size_t i = contours_reduced_2.size() - 1; i >= 4; i-- )
-{
-contours_reduced_2.erase( contours_reduced_2.begin() + i );
-}
-}
-}*/
-
 std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision)
 {
 	vector< vector <Point> > contours_approxed;
@@ -400,44 +415,176 @@ double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours
 
 std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed)
 {
-	Point2f p1, p2, p3, p4;
+	Point2f Point1, Point2, Point3, Point4;
 	std::vector<Point2f> TargetPoints;
 	double dAvarageNumberOfPoints = GetAverageNrOfPointsForContoursSet(contours_approxed);
 	if (dAvarageNumberOfPoints < 5.0)
 	{
-		p1.x = 445;
-		p1.y = 0;
-
-		p2.x = 890;
-		p2.y = 315;
-
-		p3.x = 445;
-		p3.y = 630;
-
-		p4.x = 0;
-		p4.y = 315;
+		Point1.x = 445; Point1.y = 0;
+		Point2.x = 890; Point2.y = 315;
+		Point3.x = 445; Point3.y = 630;
+		Point4.x = 0; Point4.y = 315;
 	}
 	else
 	{
-		p1.x = 890;
-		p1.y = 0;
-
-		p2.x = 890;
-		p2.y = 630;
-
-		p3.x = 0;
-		p3.y = 630;
-
-		p4.x = 0;
-		p4.y = 0;
+		Point1.x = 890; Point1.y = 0;
+		Point2.x = 890; Point2.y = 630;
+		Point3.x = 0; Point3.y = 630;
+		Point4.x = 0; Point4.y = 0;
 	}
 
-	TargetPoints.push_back(p1);
-	TargetPoints.push_back(p2);
-	TargetPoints.push_back(p3);
-	TargetPoints.push_back(p4);
+	TargetPoints.push_back(Point1);
+	TargetPoints.push_back(Point2);
+	TargetPoints.push_back(Point3);
+	TargetPoints.push_back(Point4);
 
 	return TargetPoints;
+}
+
+std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point> > contours_jelly_reduced)
+{
+	std::vector<AreaAndElemNumber> VectorOfAreaAndElem;
+	AreaAndElemNumber TempStruct;
+
+	for (int i = 0; i < contours_jelly_reduced.size(); i++)
+	{
+		vector<Point> contour = contours_jelly_reduced[i];
+		TempStruct.iElementNumber = i;
+		TempStruct.dArea = contourArea(contour);
+
+		VectorOfAreaAndElem.push_back(TempStruct);
+	}
+
+	return VectorOfAreaAndElem;
+}
+
+double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
+{
+	double median = 0.0;
+	int MiddleElementIndex = 0; //remember vector starts from 0 index, modified median algorithm needed
+	size_t n = VectorOfAreaAndElem.size();
+	if (n > 1)
+	{
+		if (n % 2 == 1)
+		{
+			MiddleElementIndex = (n - 1) / 2;
+			median = VectorOfAreaAndElem[MiddleElementIndex].dArea;
+		}
+		else
+		{
+			MiddleElementIndex = n / 2;
+			median = (VectorOfAreaAndElem[MiddleElementIndex].dArea + VectorOfAreaAndElem[MiddleElementIndex - 1].dArea) / 2;
+		}
+	}
+	else if (n == 1)
+	{
+		median = VectorOfAreaAndElem[0].dArea;
+	}
+
+	return median;
+
+}
+
+int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
+{
+	int iNumberOfJellies = 0;
+	double dMedian = Median(VectorOfAreaAndElem);
+	if (dMedian > 5000)
+	{
+		dMedian = 3480; // experimentaly matched
+	}
+	if (VectorOfAreaAndElem.size() > 0)
+	{
+		for (size_t i = 0; i < VectorOfAreaAndElem.size(); i++)
+		{
+			iNumberOfJellies = iNumberOfJellies + round(VectorOfAreaAndElem[i].dArea / dMedian);
+		}
+	}
+	return iNumberOfJellies;
+}
+
+int CountColorJelly(cv::Mat warp_hsv, int color)
+{
+	Mat StructuringElement, dest_hsv, dilate_output, erode_output;
+	int dilation_erosion_size = 3, iNumberOfJellies = 0;
+	vector< vector <Point> > contours_jelly, contours_jelly_reduced;
+	vector<AreaAndElemNumber> VectorOfAreaAndElem;
+	Scalar LowerColorRange, UpperColorRange;
+
+	// from OpenCV documentaion
+	StructuringElement = getStructuringElement(MORPH_CROSS,
+		Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
+		Point(dilation_erosion_size, dilation_erosion_size));
+
+	switch (color)
+	{
+	case WHITE:
+	{
+		LowerColorRange = Scalar(11, 50, 100);
+		UpperColorRange = Scalar(24, 150, 255);
+		break;
+	}
+	case YELLOW:
+	{
+		LowerColorRange = Scalar(15, 150, 120);
+		UpperColorRange = Scalar(45, 255, 255);
+		break;
+	}
+	case ORANGE:
+	{
+		LowerColorRange = Scalar(6, 120, 100);
+		UpperColorRange = Scalar(14, 255, 255);
+		break;
+	}
+	case LIGHT_RED:
+	{
+		LowerColorRange = Scalar(0, 170, 100);
+		UpperColorRange = Scalar(4, 255, 255);
+		break;
+	}
+	case DARK_RED:
+	{
+		LowerColorRange = Scalar(169, 90, 0);
+		UpperColorRange = Scalar(179, 255, 130);
+		break;
+	}
+	case GREEN:
+	{
+		LowerColorRange = Scalar(10, 80, 0);
+		UpperColorRange = Scalar(50, 255, 110);
+		break;
+	}
+	}
+
+	inRange(warp_hsv, LowerColorRange, UpperColorRange, dest_hsv);
+	//operacja domkniecia wedlug dokumentacji OpenCV
+
+	erode(dest_hsv, erode_output, StructuringElement, cv::Point(-1, -1), 1);
+	dilate(erode_output, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
+	findContours(dilate_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
+	contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 2100, 25000);
+
+	Scalar color2(255, 255, 255);
+	for (int i = 0; i < contours_jelly_reduced.size(); i++)
+	{
+		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
+		drawContours(dilate_output, contours_jelly_reduced, i, color2, 2, 8);
+
+	}
+
+	if (contours_jelly_reduced.size() > 0)
+	{
+		VectorOfAreaAndElem = CalculateContoursArea(contours_jelly_reduced);
+		Quicksort(VectorOfAreaAndElem, 0, (int)VectorOfAreaAndElem.size() - 1);
+		iNumberOfJellies = CountJellies(VectorOfAreaAndElem);
+	}
+
+
+	contours_jelly.clear();
+	contours_jelly_reduced.clear();
+	VectorOfAreaAndElem.clear();
+
+	return iNumberOfJellies;
 }
 
 int main(int, char)
@@ -460,33 +607,40 @@ int main(int, char)
 
 
 	//ladowanie obrazkow do wektora Mat i skalowanie ich
-	vector <Mat> frames;
-	Mat temp_frame;
+	vector <Mat> frames, frames_hsv, frames_color;
+	Mat temp_frame, temp_frame_grey, temp_frame_hsv;
 	for (size_t i = 0; i < nazwy_obrazkow.size(); i++)
 	{
-		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i], CV_LOAD_IMAGE_GRAYSCALE);
-		Mat resized;
+		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i], CV_LOAD_IMAGE_COLOR);
+		cvtColor(temp_frame, temp_frame_grey, CV_BGR2GRAY);
+		cvtColor(temp_frame, temp_frame_hsv, CV_BGR2HSV);
+		Mat resized, resized2, resized3;
 
 		if (temp_frame.rows <= temp_frame.cols)
 		{
-			resized.create(1170, 2080, temp_frame.type());
-
+			resized.create(1170, 2080, temp_frame_grey.type());
+			resized2.create(1170, 2080, temp_frame_hsv.type());
+			resized3.create(1170, 2080, temp_frame.type());
 		}
 		else
 		{
-			resized.create(2080, 1170, temp_frame.type());
+			resized.create(2080, 1170, temp_frame_grey.type());
+			resized2.create(2080, 1170, temp_frame_hsv.type());
+			resized3.create(2080, 1170, temp_frame.type());
 		}
 
-		cv::resize(temp_frame, resized, resized.size());
+		cv::resize(temp_frame_grey, resized, resized.size());
+		cv::resize(temp_frame_hsv, resized2, resized2.size());
+		cv::resize(temp_frame, resized3, resized3.size());
 		frames.push_back(resized);
+		frames_hsv.push_back(resized2);
+		frames_color.push_back(resized3);
 	}
 
 
-	Mat threshold_img, element, dilation_dst, dest_img, transform_matrix, erode_dst, test;
-	int dilation_size = 3;
-	vector< vector <Point> > contours, contours_reduced, contours_reduced_2, contours_reduced_3, contours_approxed;
-	vector <double> areas;
-	double area0 = 0;
+	Mat threshold_img, StructuringElement, dilation_dst, warp_color, warp_hsv, transform_matrix, erode_dst, test, canny_img, dest_hsv, dilate_output, erode_output;
+	int dilation_erosion_size = 3;
+	vector< vector <Point> > contours, contours_reduced, contours_reduced_2, contours_reduced_3, contours_approxed, contours_canny, contours_canny_approx, contours_jelly, contours_jelly_reduced;
 	Point2f center;
 	float radius = 0.0;
 	double dLowerAreaThreshold = 0;
@@ -497,12 +651,13 @@ int main(int, char)
 	{
 		threshold(frames[13], threshold_img, 36 - i, 255, THRESH_BINARY);
 
-		element = getStructuringElement(MORPH_ELLIPSE,
-			Size(2 * dilation_size + 1, 2 * dilation_size + 1),
-			Point(dilation_size, dilation_size));
+		// from OpenCV documentaion
+		StructuringElement = getStructuringElement(MORPH_ELLIPSE,
+			Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
+			Point(dilation_erosion_size, dilation_erosion_size));
 
-		dilate(threshold_img, dilation_dst, element, cv::Point(-1, -1), 3);
-		erode(dilation_dst, erode_dst, element, cv::Point(-1, -1), 2);
+		dilate(threshold_img, dilation_dst, StructuringElement, cv::Point(-1, -1), 3);
+		erode(dilation_dst, erode_dst, StructuringElement, cv::Point(-1, -1), 2);
 
 		findContours(erode_dst, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
 
@@ -519,24 +674,15 @@ int main(int, char)
 	}
 
 	contours_reduced_2 = RemoveObjEnclosingCircleLessThen(contours_reduced, 28);
-	//	RemoveTooComplicatedContours( contours_reduced_2 );
 
-	for (size_t i = 0; i < contours_reduced_2.size(); i++)
-	{
-		vector<Point> contour = contours_reduced_2[i];
-
-		area0 = contourArea(contour);
-		areas.push_back(area0);
-	}
-
-	/// Get the moments
+	///  Get the moments, from OpenCV documentaion
 	vector<Moments> mu(contours_reduced_2.size());
 	for (int i = 0; i < contours_reduced_2.size(); i++)
 	{
 		mu[i] = moments(contours_reduced_2[i], false);
 	}
 
-	///  Get the mass centers:
+
 	vector<Point2f> mc2(contours_reduced_2.size());
 	vector<Point2f> mc3, mc3_related, mc3_clockwise;
 	Point2f oCenterPoint;
@@ -544,6 +690,7 @@ int main(int, char)
 	vector<DistanceAndElemNumber> VectorOfDistAndElem;
 	vector<Point2f> TargetPoints;
 
+	///  Get the mass centers, from OpenCV documentaion
 	for (int i = 0; i < contours_reduced_2.size(); i++)
 	{
 		mc2[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
@@ -562,12 +709,12 @@ int main(int, char)
 	}
 
 	Scalar color(255, 255, 255);
-	for (int i = 1; i < contours_reduced_3.size(); i++)
+	for (int i = 0; i < contours_reduced_3.size(); i++)
 	{
 		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
 		drawContours(erode_dst, contours_reduced_3, i, color, 2, 8);
 		Mat resized2;
-		resized2.create(frames[13].rows / 2, frames[13].cols / 2, frames[7].type());
+		resized2.create(frames[13].rows / 2, frames[13].cols / 2, frames[13].type());
 		cv::resize(erode_dst, test, resized2.size());
 
 	}
@@ -578,23 +725,51 @@ int main(int, char)
 	Quicksort(VectorOfAngleAndElem, 0, (int)VectorOfAngleAndElem.size() - 1);
 	mc3_clockwise = EnumerateVerticiesClockwise(VectorOfAngleAndElem, mc3);
 
-	contours_approxed = ApproximateContours(contours_reduced_3, 7);
-	TargetPoints = GetTargetPointsDependingOnMarkerType(contours_approxed);
+	int iWhiteJellies = 0, iYellowJellies = 0, iOrangeJellies = 0, iLightRedJellies = 0, iDarkRedJellies = 0, iGreenJellies = 0;
 
 
+	if (mc3_clockwise.size() == 4 && contours_reduced_3.size() == 4)
+	{
+		contours_approxed = ApproximateContours(contours_reduced_3, 7);
+		TargetPoints = GetTargetPointsDependingOnMarkerType(contours_approxed);
+		transform_matrix = getPerspectiveTransform(mc3_clockwise, TargetPoints);
+		warpPerspective(frames_color[13], warp_color, transform_matrix, Size(890, 630));
+		warpPerspective(frames_hsv[13], warp_hsv, transform_matrix, Size(890, 630));
 
+		iWhiteJellies = CountColorJelly(warp_hsv, WHITE);
+		iYellowJellies = CountColorJelly(warp_hsv, YELLOW);
+		iOrangeJellies = CountColorJelly(warp_hsv, ORANGE);
+		iLightRedJellies = CountColorJelly(warp_hsv, LIGHT_RED);
+		iDarkRedJellies = CountColorJelly(warp_hsv, DARK_RED);
+		iGreenJellies = CountColorJelly(warp_hsv, GREEN);
 
-	transform_matrix = getPerspectiveTransform(mc3_clockwise, TargetPoints);
-	/*if (frames[13].rows <= frames[13].cols)
-	{*/
-	warpPerspective(frames[13], dest_img, transform_matrix, Size(890, 630));
-	/*	}
+		Canny(warp_color, canny_img, 50, 118);
+		dilate(canny_img, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
+		erode(dilate_output, erode_output, StructuringElement, cv::Point(-1, -1), 1);
+		findContours(erode_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
+		contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 1500, 25000);
+		/*inRange(warp_hsv, Scalar(17, 110, 150), Scalar(21, 255, 255), dest_hsv);
+		//operacja domkniecia wedlug dokumentacji OpenCV
+		dilate(dest_hsv, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
+		erode(dilate_output, erode_output, StructuringElement, cv::Point(-1, -1), 1);
+		findContours(erode_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
+		contours_jelly_reduced = RemoveSmallAndBigContours( contours_jelly, 1000, 25000 );*/
+
+		for (int i = 0; i < contours_jelly_reduced.size(); i++)
+		{
+			//drawContours(erode_output, contours_jelly_reduced, i, color, 2, 8);
+			drawContours(erode_output, contours_jelly_reduced, i, color, CV_FILLED);
+		}
+
+	}
 	else
 	{
-	warpPerspective(frames[13], dest_img, transform_matrix, Size(500, 800));
-	}*/
+
+	}
+
+
 	imshow("okno2", test);
-	imshow("okno", dest_img);
+	imshow("okno", erode_output);
 
 	waitKey();
 	return 0;
