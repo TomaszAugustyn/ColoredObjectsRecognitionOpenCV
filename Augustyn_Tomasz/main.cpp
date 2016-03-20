@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <cmath>
+#include <windows.h>
 
 
 using namespace cv;
@@ -29,6 +30,7 @@ std::vector<Point2f> RemoveContoursFarestFromCenter(std::vector<DistanceAndElemN
 std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2);
 std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold);
 std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius);
+std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contours_reduced_2);
 std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision);
 double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours_approxed);
 std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed);
@@ -386,6 +388,28 @@ std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vect
 	}
 }
 
+std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contours_reduced_2)
+{
+	///  Get the moments, from OpenCV documentation
+	vector<Moments> mu(contours_reduced_2.size());
+	vector<Point2f> mc2(contours_reduced_2.size());
+
+	for (int i = 0; i < contours_reduced_2.size(); i++)
+	{
+		mu[i] = moments(contours_reduced_2[i], false);
+	}
+
+	///  Get the mass centers, from OpenCV documentation
+	for (int i = 0; i < contours_reduced_2.size(); i++)
+	{
+		mc2[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
+	}
+
+	return mc2;
+}
+
+
+
 std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision)
 {
 	vector< vector <Point> > contours_approxed;
@@ -485,6 +509,34 @@ double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 
 }
 
+//overloaded median function
+int Median(std::vector<int> color_jellies)
+{
+	int median = 0, MiddleElementIndex = 0;  //remember vector starts from 0 index, modified median algorithm needed
+	size_t n = color_jellies.size();
+
+	if (n > 1)
+	{
+		if (n % 2 == 1)
+		{
+			MiddleElementIndex = (n - 1) / 2;
+			median = color_jellies[MiddleElementIndex];
+		}
+		else
+		{
+			MiddleElementIndex = n / 2;
+			median = round((color_jellies[MiddleElementIndex] + color_jellies[MiddleElementIndex - 1]) / 2);
+		}
+	}
+	else if (n == 1)
+	{
+		median = color_jellies[0];
+	}
+
+	return median;
+
+}
+
 int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 {
 	int iNumberOfJellies = 0;
@@ -505,14 +557,14 @@ int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 
 int CountColorJelly(cv::Mat warp_hsv, int color)
 {
-	Mat StructuringElement, dest_hsv, dilate_output, erode_output;
+	Mat StructuringElement, dest_hsv, dilate_output, erode_output, light_red_secondary;
 	int dilation_erosion_size = 3, iNumberOfJellies = 0;
 	vector< vector <Point> > contours_jelly, contours_jelly_reduced;
 	vector<AreaAndElemNumber> VectorOfAreaAndElem;
-	Scalar LowerColorRange, UpperColorRange;
+	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary;
 
 	// from OpenCV documentaion
-	StructuringElement = getStructuringElement(MORPH_CROSS,
+	StructuringElement = getStructuringElement(MORPH_ELLIPSE,
 		Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
 		Point(dilation_erosion_size, dilation_erosion_size));
 
@@ -538,14 +590,26 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	}
 	case LIGHT_RED:
 	{
+		/*LowerColorRange = Scalar(0, 165, 100);
+		UpperColorRange = Scalar(7, 255, 255);
+
+		LowerLightRedSecondary = Scalar(140, 167, 115);
+		HigherLightRedSecondary = Scalar(180, 255, 255);*/
+
 		LowerColorRange = Scalar(0, 170, 100);
 		UpperColorRange = Scalar(4, 255, 255);
+
+		LowerLightRedSecondary = Scalar(178, 170, 100);
+		HigherLightRedSecondary = Scalar(180, 255, 255);
+
 		break;
 	}
 	case DARK_RED:
 	{
-		LowerColorRange = Scalar(169, 90, 0);
-		UpperColorRange = Scalar(179, 255, 130);
+		//LowerColorRange = Scalar(169, 90, 0);
+		//UpperColorRange = Scalar(179, 255, 130);
+		LowerColorRange = Scalar(165, 115, 60);
+		UpperColorRange = Scalar(179, 240, 132);
 		break;
 	}
 	case GREEN:
@@ -557,12 +621,17 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	}
 
 	inRange(warp_hsv, LowerColorRange, UpperColorRange, dest_hsv);
-	//operacja domkniecia wedlug dokumentacji OpenCV
-
+	//special case for light red jelly
+	if (color == LIGHT_RED)
+	{
+		inRange(warp_hsv, LowerLightRedSecondary, HigherLightRedSecondary, light_red_secondary);
+		dest_hsv = dest_hsv + light_red_secondary;
+	}
+	//operacja otwarcia wedlug dokumentacji OpenCV
 	erode(dest_hsv, erode_output, StructuringElement, cv::Point(-1, -1), 1);
 	dilate(erode_output, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
 	findContours(dilate_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
-	contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 2100, 25000);
+	contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 600, 25000);
 
 	Scalar color2(255, 255, 255);
 	for (int i = 0; i < contours_jelly_reduced.size(); i++)
@@ -579,7 +648,6 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 		iNumberOfJellies = CountJellies(VectorOfAreaAndElem);
 	}
 
-
 	contours_jelly.clear();
 	contours_jelly_reduced.clear();
 	VectorOfAreaAndElem.clear();
@@ -589,9 +657,14 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 
 int main(int, char)
 {
+	//namedWindow("okno", 1);
+	//namedWindow("okno2", 1);
+
 	//odczyt pliku tekstowego
 	vector<string> nazwy_obrazkow;
-	string pojedyncza_linia;
+	vector<int> nr_sceny;
+	int scena_int;
+	string pojedyncza_linia, scena_str;
 	fstream plik;
 	plik.open("nazwy_zdjec/nazwy_zdjec.txt", ios::in);
 	if (plik.good() == false)
@@ -602,174 +675,231 @@ int main(int, char)
 	while (getline(plik, pojedyncza_linia))
 	{
 		nazwy_obrazkow.push_back(pojedyncza_linia);
+		scena_str = pojedyncza_linia.substr(6, 3);
+		scena_int = stoi(scena_str);
+		nr_sceny.push_back(scena_int);
 	}
 	plik.close();
 
 
 	//ladowanie obrazkow do wektora Mat i skalowanie ich
-	vector <Mat> frames, frames_hsv, frames_color;
+	vector <Mat> frames, frames_hsv;
 	Mat temp_frame, temp_frame_grey, temp_frame_hsv;
+
+
 	for (size_t i = 0; i < nazwy_obrazkow.size(); i++)
 	{
 		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i], CV_LOAD_IMAGE_COLOR);
 		cvtColor(temp_frame, temp_frame_grey, CV_BGR2GRAY);
 		cvtColor(temp_frame, temp_frame_hsv, CV_BGR2HSV);
-		Mat resized, resized2, resized3;
+		Mat resized, resized2;
 
 		if (temp_frame.rows <= temp_frame.cols)
 		{
 			resized.create(1170, 2080, temp_frame_grey.type());
 			resized2.create(1170, 2080, temp_frame_hsv.type());
-			resized3.create(1170, 2080, temp_frame.type());
 		}
 		else
 		{
 			resized.create(2080, 1170, temp_frame_grey.type());
 			resized2.create(2080, 1170, temp_frame_hsv.type());
-			resized3.create(2080, 1170, temp_frame.type());
 		}
 
 		cv::resize(temp_frame_grey, resized, resized.size());
 		cv::resize(temp_frame_hsv, resized2, resized2.size());
-		cv::resize(temp_frame, resized3, resized3.size());
 		frames.push_back(resized);
 		frames_hsv.push_back(resized2);
-		frames_color.push_back(resized3);
 	}
 
+	vector<int> white_jellies, yellow_jellies, orange_jellies, light_red_jellies, dark_red_jellies, green_jellies;
+	fstream output_file;
+	output_file.open("wyniki/Augustyn_Tomasz.txt", ios::out);
 
-	Mat threshold_img, StructuringElement, dilation_dst, warp_color, warp_hsv, transform_matrix, erode_dst, test, canny_img, dest_hsv, dilate_output, erode_output;
-	int dilation_erosion_size = 3;
-	vector< vector <Point> > contours, contours_reduced, contours_reduced_2, contours_reduced_3, contours_approxed, contours_canny, contours_canny_approx, contours_jelly, contours_jelly_reduced;
-	Point2f center;
-	float radius = 0.0;
-	double dLowerAreaThreshold = 0;
-	namedWindow("okno", 1);
-	namedWindow("okno2", 1);
+	for (size_t iCounter = 0; iCounter < frames.size(); iCounter++)
 
-	for (int i = 0; i <= 4; i++)
 	{
-		threshold(frames[13], threshold_img, 36 - i, 255, THRESH_BINARY);
+		Mat threshold_img, StructuringElement, dilation_dst, warp_hsv, transform_matrix, erode_dst, test, dest_hsv, dilate_output, erode_output;
+		int dilation_erosion_size = 3;
+		vector< vector <Point> > contours, contours_reduced, contours_reduced_2, contours_reduced_3, contours_approxed;
+		float radius = 0.0;
+		double dLowerAreaThreshold = 0;
+		vector<Point2f> mc2, mc3, mc3_related, mc3_clockwise;
+		Point2f oCenterPoint;
+		vector<AngleAndElemNumber> VectorOfAngleAndElem;
+		vector<DistanceAndElemNumber> VectorOfDistAndElem;
+		vector<Point2f> TargetPoints;
 
-		// from OpenCV documentaion
-		StructuringElement = getStructuringElement(MORPH_ELLIPSE,
-			Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
-			Point(dilation_erosion_size, dilation_erosion_size));
 
-		dilate(threshold_img, dilation_dst, StructuringElement, cv::Point(-1, -1), 3);
-		erode(dilation_dst, erode_dst, StructuringElement, cv::Point(-1, -1), 2);
-
-		findContours(erode_dst, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-
-		if (i == 0)
-			dLowerAreaThreshold = 750;
-		else
-			dLowerAreaThreshold = 400;
-
-		contours_reduced = RemoveSmallAndBigContours(contours, dLowerAreaThreshold, 18000);
-		if (contours_reduced.size() <= 4)
+		for (int i = 0; i <= 4; i++)
 		{
-			break;
+			threshold(frames[iCounter], threshold_img, 36 - i, 255, THRESH_BINARY);
+
+			// from OpenCV documentaion
+			StructuringElement = getStructuringElement(MORPH_ELLIPSE,
+				Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
+				Point(dilation_erosion_size, dilation_erosion_size));
+
+			dilate(threshold_img, dilation_dst, StructuringElement, cv::Point(-1, -1), 3);
+			erode(dilation_dst, erode_dst, StructuringElement, cv::Point(-1, -1), 2);
+
+			findContours(erode_dst, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+
+			if (i == 0)
+				dLowerAreaThreshold = 750;
+			else
+				dLowerAreaThreshold = 400;
+
+			contours_reduced = RemoveSmallAndBigContours(contours, dLowerAreaThreshold, 18000);
+			if (contours_reduced.size() <= 4)
+			{
+				break;
+			}
 		}
-	}
 
-	contours_reduced_2 = RemoveObjEnclosingCircleLessThen(contours_reduced, 28);
+		contours_reduced_2 = RemoveObjEnclosingCircleLessThen(contours_reduced, 28);
+		mc2 = GetContoursMassCenters(contours_reduced_2);
 
-	///  Get the moments, from OpenCV documentaion
-	vector<Moments> mu(contours_reduced_2.size());
-	for (int i = 0; i < contours_reduced_2.size(); i++)
-	{
-		mu[i] = moments(contours_reduced_2[i], false);
-	}
+		if (contours_reduced_2.size() > 4)
+		{
+			VectorOfDistAndElem = CalculateDistanceToCenter(mc2, frames[iCounter]);
+			Quicksort(VectorOfDistAndElem, 0, (int)VectorOfDistAndElem.size() - 1);
+			mc3 = RemoveContoursFarestFromCenter(VectorOfDistAndElem, mc2, contours_reduced_2, contours_reduced_3);
+		}
+		else
+		{
+			contours_reduced_3 = contours_reduced_2;
+			mc3 = mc2;
+		}
 
-
-	vector<Point2f> mc2(contours_reduced_2.size());
-	vector<Point2f> mc3, mc3_related, mc3_clockwise;
-	Point2f oCenterPoint;
-	vector<AngleAndElemNumber> VectorOfAngleAndElem;
-	vector<DistanceAndElemNumber> VectorOfDistAndElem;
-	vector<Point2f> TargetPoints;
-
-	///  Get the mass centers, from OpenCV documentaion
-	for (int i = 0; i < contours_reduced_2.size(); i++)
-	{
-		mc2[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
-	}
-
-	if (contours_reduced_2.size() > 4)
-	{
-		VectorOfDistAndElem = CalculateDistanceToCenter(mc2, frames[13]);
-		Quicksort(VectorOfDistAndElem, 0, (int)VectorOfDistAndElem.size() - 1);
-		mc3 = RemoveContoursFarestFromCenter(VectorOfDistAndElem, mc2, contours_reduced_2, contours_reduced_3);
-	}
-	else
-	{
-		contours_reduced_3 = contours_reduced_2;
-		mc3 = mc2;
-	}
-
-	Scalar color(255, 255, 255);
-	for (int i = 0; i < contours_reduced_3.size(); i++)
-	{
+		/*Scalar color(255, 255, 255);
+		for (int i = 0; i < contours_reduced_3.size(); i++)
+		{
 		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
 		drawContours(erode_dst, contours_reduced_3, i, color, 2, 8);
 		Mat resized2;
-		resized2.create(frames[13].rows / 2, frames[13].cols / 2, frames[13].type());
+		resized2.create(frames[iCounter].rows / 2, frames[iCounter].cols / 2, frames[iCounter].type());
 		cv::resize(erode_dst, test, resized2.size());
 
-	}
+		}*/
 
-	oCenterPoint = CalculateCenterPointOfPoints(mc3);
-	mc3_related = RelateVectorOfPointsToTheCenterPoint(mc3, oCenterPoint);
-	VectorOfAngleAndElem = ConvertToPolarCoordinates(mc3_related);
-	Quicksort(VectorOfAngleAndElem, 0, (int)VectorOfAngleAndElem.size() - 1);
-	mc3_clockwise = EnumerateVerticiesClockwise(VectorOfAngleAndElem, mc3);
+		oCenterPoint = CalculateCenterPointOfPoints(mc3);
+		mc3_related = RelateVectorOfPointsToTheCenterPoint(mc3, oCenterPoint);
+		VectorOfAngleAndElem = ConvertToPolarCoordinates(mc3_related);
+		Quicksort(VectorOfAngleAndElem, 0, (int)VectorOfAngleAndElem.size() - 1);
+		mc3_clockwise = EnumerateVerticiesClockwise(VectorOfAngleAndElem, mc3);
 
-	int iWhiteJellies = 0, iYellowJellies = 0, iOrangeJellies = 0, iLightRedJellies = 0, iDarkRedJellies = 0, iGreenJellies = 0;
+		int iWhiteJellies = 0, iYellowJellies = 0, iOrangeJellies = 0, iLightRedJellies = 0, iDarkRedJellies = 0, iGreenJellies = 0;
+		int MiddleWhite = 0, MiddleYellow = 0, MiddleOrange = 0, MiddleLightRed = 0, MiddleDarkRed = 0, MiddleGreen = 0;
 
 
-	if (mc3_clockwise.size() == 4 && contours_reduced_3.size() == 4)
-	{
-		contours_approxed = ApproximateContours(contours_reduced_3, 7);
-		TargetPoints = GetTargetPointsDependingOnMarkerType(contours_approxed);
-		transform_matrix = getPerspectiveTransform(mc3_clockwise, TargetPoints);
-		warpPerspective(frames_color[13], warp_color, transform_matrix, Size(890, 630));
-		warpPerspective(frames_hsv[13], warp_hsv, transform_matrix, Size(890, 630));
-
-		iWhiteJellies = CountColorJelly(warp_hsv, WHITE);
-		iYellowJellies = CountColorJelly(warp_hsv, YELLOW);
-		iOrangeJellies = CountColorJelly(warp_hsv, ORANGE);
-		iLightRedJellies = CountColorJelly(warp_hsv, LIGHT_RED);
-		iDarkRedJellies = CountColorJelly(warp_hsv, DARK_RED);
-		iGreenJellies = CountColorJelly(warp_hsv, GREEN);
-
-		Canny(warp_color, canny_img, 50, 118);
-		dilate(canny_img, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
-		erode(dilate_output, erode_output, StructuringElement, cv::Point(-1, -1), 1);
-		findContours(erode_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
-		contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 1500, 25000);
-		/*inRange(warp_hsv, Scalar(17, 110, 150), Scalar(21, 255, 255), dest_hsv);
-		//operacja domkniecia wedlug dokumentacji OpenCV
-		dilate(dest_hsv, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
-		erode(dilate_output, erode_output, StructuringElement, cv::Point(-1, -1), 1);
-		findContours(erode_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
-		contours_jelly_reduced = RemoveSmallAndBigContours( contours_jelly, 1000, 25000 );*/
-
-		for (int i = 0; i < contours_jelly_reduced.size(); i++)
+		if (mc3_clockwise.size() == 4 && contours_reduced_3.size() == 4)
 		{
-			//drawContours(erode_output, contours_jelly_reduced, i, color, 2, 8);
-			drawContours(erode_output, contours_jelly_reduced, i, color, CV_FILLED);
+			contours_approxed = ApproximateContours(contours_reduced_3, 8);
+			TargetPoints = GetTargetPointsDependingOnMarkerType(contours_approxed);
+			transform_matrix = getPerspectiveTransform(mc3_clockwise, TargetPoints);
+			warpPerspective(frames_hsv[iCounter], warp_hsv, transform_matrix, Size(890, 630));
+
+			iWhiteJellies = CountColorJelly(warp_hsv, WHITE);
+			iYellowJellies = CountColorJelly(warp_hsv, YELLOW);
+			iOrangeJellies = CountColorJelly(warp_hsv, ORANGE);
+			iLightRedJellies = CountColorJelly(warp_hsv, LIGHT_RED);
+			iDarkRedJellies = CountColorJelly(warp_hsv, DARK_RED);
+			iGreenJellies = CountColorJelly(warp_hsv, GREEN);
+
+			if (iCounter != 0)
+			{
+				if (nr_sceny[iCounter] == nr_sceny[iCounter - 1])
+				{
+					white_jellies.push_back(iWhiteJellies);
+					yellow_jellies.push_back(iYellowJellies);
+					orange_jellies.push_back(iOrangeJellies);
+					light_red_jellies.push_back(iLightRedJellies);
+					dark_red_jellies.push_back(iDarkRedJellies);
+					green_jellies.push_back(iGreenJellies);
+				}
+				else
+				{
+					std::sort(white_jellies.begin(), white_jellies.end());
+					std::sort(yellow_jellies.begin(), yellow_jellies.end());
+					std::sort(orange_jellies.begin(), orange_jellies.end());
+					std::sort(light_red_jellies.begin(), light_red_jellies.end());
+					std::sort(dark_red_jellies.begin(), dark_red_jellies.end());
+					std::sort(green_jellies.begin(), green_jellies.end());
+
+					MiddleWhite = Median(white_jellies);
+					MiddleYellow = Median(yellow_jellies);
+					MiddleOrange = Median(orange_jellies);
+					MiddleLightRed = Median(light_red_jellies);
+					MiddleDarkRed = Median(dark_red_jellies);
+					MiddleGreen = Median(green_jellies);
+
+					output_file << MiddleDarkRed << ", " << MiddleLightRed << ", " << MiddleGreen << ", " << MiddleOrange << ", " << MiddleWhite << ", " << MiddleYellow << endl;
+
+					white_jellies.clear();
+					yellow_jellies.clear();
+					orange_jellies.clear();
+					light_red_jellies.clear();
+					dark_red_jellies.clear();
+					green_jellies.clear();
+
+					white_jellies.push_back(iWhiteJellies);
+					yellow_jellies.push_back(iYellowJellies);
+					orange_jellies.push_back(iOrangeJellies);
+					light_red_jellies.push_back(iLightRedJellies);
+					dark_red_jellies.push_back(iDarkRedJellies);
+					green_jellies.push_back(iGreenJellies);
+
+				}
+
+				if (iCounter == (frames.size() - 1))
+				{
+					std::sort(white_jellies.begin(), white_jellies.end());
+					std::sort(yellow_jellies.begin(), yellow_jellies.end());
+					std::sort(orange_jellies.begin(), orange_jellies.end());
+					std::sort(light_red_jellies.begin(), light_red_jellies.end());
+					std::sort(dark_red_jellies.begin(), dark_red_jellies.end());
+					std::sort(green_jellies.begin(), green_jellies.end());
+
+					MiddleWhite = Median(white_jellies);
+					MiddleYellow = Median(yellow_jellies);
+					MiddleOrange = Median(orange_jellies);
+					MiddleLightRed = Median(light_red_jellies);
+					MiddleDarkRed = Median(dark_red_jellies);
+					MiddleGreen = Median(green_jellies);
+
+					output_file << MiddleDarkRed << ", " << MiddleLightRed << ", " << MiddleGreen << ", " << MiddleOrange << ", " << MiddleWhite << ", " << MiddleYellow << endl;
+				}
+
+			}
+			else
+			{
+
+				white_jellies.push_back(iWhiteJellies);
+				yellow_jellies.push_back(iYellowJellies);
+				orange_jellies.push_back(iOrangeJellies);
+				light_red_jellies.push_back(iLightRedJellies);
+				dark_red_jellies.push_back(iDarkRedJellies);
+				green_jellies.push_back(iGreenJellies);
+
+				output_file << "c, j, zi, p, b, zol " << endl;
+
+				if (frames.size() == 1)
+				{
+
+				}
+			}
+
 		}
+		else
+		{
 
+		}
 	}
-	else
-	{
 
-	}
-
-
-	imshow("okno2", test);
-	imshow("okno", erode_output);
+	output_file.close();
+	cout << "Zapis wynikow do pliku zakonczony." << endl;
+	//imshow("okno2", test);
+	//imshow("okno", erode_output);
 
 	waitKey();
 	return 0;
