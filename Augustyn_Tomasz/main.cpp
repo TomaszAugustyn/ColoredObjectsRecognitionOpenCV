@@ -561,7 +561,7 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	int dilation_erosion_size = 3, iNumberOfJellies = 0;
 	vector< vector <Point> > contours_jelly, contours_jelly_reduced;
 	vector<AreaAndElemNumber> VectorOfAreaAndElem;
-	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary;
+	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary, LowerOrangeRange, UpperOrangeRange;
 
 	// from OpenCV documentaion
 	StructuringElement = getStructuringElement(MORPH_ELLIPSE,
@@ -572,50 +572,52 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	{
 	case WHITE:
 	{
-		LowerColorRange = Scalar(11, 50, 100);
-		UpperColorRange = Scalar(24, 150, 255);
+		/*LowerColorRange = Scalar(11, 50, 100);
+		UpperColorRange = Scalar(24, 150, 255);*/
+
+		LowerColorRange = Scalar(11, 50, 103);
+		UpperColorRange = Scalar(24, 150, 206);
+
 		break;
 	}
 	case YELLOW:
 	{
-		LowerColorRange = Scalar(15, 150, 120);
-		UpperColorRange = Scalar(45, 255, 255);
+		/*LowerColorRange = Scalar(15, 150, 120);
+		UpperColorRange = Scalar(45, 255, 255);*/
+
+		LowerColorRange = Scalar(15, 163, 107);
+		UpperColorRange = Scalar(47, 243, 205);
 		break;
 	}
 	case ORANGE:
 	{
-		LowerColorRange = Scalar(6, 120, 100);
-		UpperColorRange = Scalar(14, 255, 255);
+
+		LowerColorRange = Scalar(6, 116, 82);
+		UpperColorRange = Scalar(15, 255, 255);
 		break;
 	}
 	case LIGHT_RED:
 	{
-		/*LowerColorRange = Scalar(0, 165, 100);
-		UpperColorRange = Scalar(7, 255, 255);
+		//Light red jelly in hsv consists of 2 colors (turquoise and green) - 2 ranges necessery
+		LowerColorRange = Scalar(0, 165, 111);
+		UpperColorRange = Scalar(5, 255, 255);
 
-		LowerLightRedSecondary = Scalar(140, 167, 115);
-		HigherLightRedSecondary = Scalar(180, 255, 255);*/
-
-		LowerColorRange = Scalar(0, 170, 100);
-		UpperColorRange = Scalar(4, 255, 255);
-
-		LowerLightRedSecondary = Scalar(178, 170, 100);
+		LowerLightRedSecondary = Scalar(178, 152, 115);
 		HigherLightRedSecondary = Scalar(180, 255, 255);
+
 
 		break;
 	}
 	case DARK_RED:
 	{
-		//LowerColorRange = Scalar(169, 90, 0);
-		//UpperColorRange = Scalar(179, 255, 130);
 		LowerColorRange = Scalar(165, 115, 60);
 		UpperColorRange = Scalar(179, 240, 132);
 		break;
 	}
 	case GREEN:
 	{
-		LowerColorRange = Scalar(10, 80, 0);
-		UpperColorRange = Scalar(50, 255, 110);
+		LowerColorRange = Scalar(8, 77, 0);
+		UpperColorRange = Scalar(56, 255, 124);
 		break;
 	}
 	}
