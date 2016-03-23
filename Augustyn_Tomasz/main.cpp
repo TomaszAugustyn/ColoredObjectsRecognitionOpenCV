@@ -36,6 +36,7 @@ double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours
 std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed);
 std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point> > contours_jelly_reduced);
 double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
+int Median(std::vector<int> color_jellies);
 int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
 int CountColorJelly(cv::Mat warp_hsv, int color);
 
@@ -108,14 +109,14 @@ std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> m
 
 std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> mc3_related)
 {
-	int iNumberOfPoints = mc3_related.size();
+	size_t iNumberOfPoints = mc3_related.size();
 	std::vector<AngleAndElemNumber> VectorOfAngleAndElem;
 	AngleAndElemNumber TempStruct;
 	float tempX = 0.0, tempY = 0.0;
 
-	for (int i = 0; i < iNumberOfPoints; i++)
+	for (size_t i = 0; i < iNumberOfPoints; i++)
 	{
-		TempStruct.iElementNumber = i;
+		TempStruct.iElementNumber = (int)i;
 		tempX = mc3_related[i].x;
 		tempY = mc3_related[i].y;
 
@@ -152,7 +153,7 @@ std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> m
 
 std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f> mc2, cv::Mat frame)
 {
-	int iNumberOfPoints = mc2.size();
+	size_t iNumberOfPoints = mc2.size();
 	std::vector<DistanceAndElemNumber> VectorOfDistAndElem;
 	DistanceAndElemNumber TempStruct;
 	double tempX = 0.0, tempY = 0.0;
@@ -161,9 +162,9 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 	double distance = 0.0;
 
 
-	for (int i = 0; i < iNumberOfPoints; i++)
+	for (size_t i = 0; i < iNumberOfPoints; i++)
 	{
-		TempStruct.iElementNumber = i;
+		TempStruct.iElementNumber = (int)i;
 		tempX = mc2[i].x;
 		tempY = mc2[i].y;
 		TempStruct.dDistanceToCenter = sqrt(pow(CenterX - tempX, 2) + pow(CenterY - tempY, 2));
@@ -176,18 +177,18 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 
 
 //Overloaded partition function
-int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie rozmiary katow sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) //we divide structure in 2 parts, in the first one all angle degrees are less or equal to x, in the second one greater or equal to x
 {
-	double x = VectorOfAngleAndElem[p].dPolarAngle; // obieramy x
-	int i = p, j = r, index; // i, j - indeksy w strukturze
+	double x = VectorOfAngleAndElem[p].dPolarAngle; // we take x
+	int i = p, j = r, index; // i, j - indexes in structure
 	double w;
-	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
+	while (true) // infinite loop - we leave it only by returning j
 	{
-		while (VectorOfAngleAndElem[j].dPolarAngle > x) // dopoki elementy sa wieksze od x
+		while (VectorOfAngleAndElem[j].dPolarAngle > x) // when elements are greater than x 
 			j--;
-		while (VectorOfAngleAndElem[i].dPolarAngle < x) // dopoki elementy sa mniejsze od x
+		while (VectorOfAngleAndElem[i].dPolarAngle < x) // when elements are less than x 
 			i++;
-		if (i < j) // zamieniamy miejscami gdy i < j
+		if (i < j) // we swap places when i < j
 		{
 			w = VectorOfAngleAndElem[i].dPolarAngle;
 			index = VectorOfAngleAndElem[i].iElementNumber;
@@ -200,24 +201,24 @@ int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int 
 			i++;
 			j--;
 		}
-		else // gdy i >= j zwracamy j jako punkt podzialu struktury
+		else // when i >= j  we return j as the structure division point
 			return j;
 	}
 }
 
 //Overloaded partition function
-int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie odleglosci sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r) // we divide structure in 2 parts, in the first one all distances are less or equal to x, in the second one greater or equal to x
 {
-	double x = VectorOfDistAndElem[p].dDistanceToCenter; // obieramy x
-	int i = p, j = r, index; // i, j - indeksy w strukturze
+	double x = VectorOfDistAndElem[p].dDistanceToCenter; // we take x
+	int i = p, j = r, index; // i, j - indexes in structure
 	double w;
-	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
+	while (true) // infinite loop - we leave it only by returning j
 	{
-		while (VectorOfDistAndElem[j].dDistanceToCenter > x) // dopoki elementy sa wieksze od x
+		while (VectorOfDistAndElem[j].dDistanceToCenter > x) // when elements are greater than x 
 			j--;
-		while (VectorOfDistAndElem[i].dDistanceToCenter < x) // dopoki elementy sa mniejsze od x
+		while (VectorOfDistAndElem[i].dDistanceToCenter < x) // when elements are less than x
 			i++;
-		if (i < j) // zamieniamy miejscami gdy i < j
+		if (i < j) // we swap places when i < j
 		{
 			w = VectorOfDistAndElem[i].dDistanceToCenter;
 			index = VectorOfDistAndElem[i].iElementNumber;
@@ -230,24 +231,24 @@ int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, in
 			i++;
 			j--;
 		}
-		else // gdy i >= j zwracamy j jako punkt podzialu struktury
+		else // when i >= j  we return j as the structure division point
 			return j;
 	}
 }
 
 //Overloaded partition function
-int Partition(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r) // dzielimy strukturê na dwie czesci, w pierwszej wszystkie powierzchnie sa mniejsze badz rowne x, w drugiej wieksze lub rowne od x
+int Partition(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r) // we divide structure in 2 parts, in the first one all areas are less or equal to x, in the second one greater or equal to x
 {
-	double x = VectorOfAreaAndElem[p].dArea; // obieramy x
-	int i = p, j = r, index; // i, j - indeksy w strukturze
+	double x = VectorOfAreaAndElem[p].dArea; // we take x
+	int i = p, j = r, index;  // i, j - indexes in structure
 	double w;
-	while (true) // petla nieskonczona - wychodzimy z niej tylko przez return j
+	while (true) // infinite loop - we leave it only by returning j
 	{
-		while (VectorOfAreaAndElem[j].dArea > x) // dopoki elementy sa wieksze od x
+		while (VectorOfAreaAndElem[j].dArea > x) // when elements are greater than x 
 			j--;
-		while (VectorOfAreaAndElem[i].dArea < x) // dopoki elementy sa mniejsze od x
+		while (VectorOfAreaAndElem[i].dArea < x) // when elements are less than x
 			i++;
-		if (i < j) // zamieniamy miejscami gdy i < j
+		if (i < j) // we swap places when i < j
 		{
 			w = VectorOfAreaAndElem[i].dArea;
 			index = VectorOfAreaAndElem[i].iElementNumber;
@@ -260,44 +261,44 @@ int Partition(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r)
 			i++;
 			j--;
 		}
-		else // gdy i >= j zwracamy j jako punkt podzialu struktury
+		else // when i >= j  we return j as the structure division point
 			return j;
 	}
 }
 
 //Overloaded quicksort algorithm
-void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) // sortowanie szybkie
+void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r)
 {
 	int q;
 	if (p < r)
 	{
-		q = Partition(VectorOfAngleAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
-		Quicksort(VectorOfAngleAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
-		Quicksort(VectorOfAngleAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
+		q = Partition(VectorOfAngleAndElem, p, r); // we divide structure into 2 parts; q means separating point
+		Quicksort(VectorOfAngleAndElem, p, q); // calling quicksort recursively for the first part of the structure
+		Quicksort(VectorOfAngleAndElem, q + 1, r); // calling quicksort recursively for the second part of the structure
 	}
 }
 
 //Overloaded quicksort algorithm
-void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r) // sortowanie szybkie
+void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r)
 {
 	int q;
 	if (p < r)
 	{
-		q = Partition(VectorOfDistAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
-		Quicksort(VectorOfDistAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
-		Quicksort(VectorOfDistAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
+		q = Partition(VectorOfDistAndElem, p, r); // we divide structure into 2 parts; q means separating point
+		Quicksort(VectorOfDistAndElem, p, q); // calling quicksort recursively for the first part of the structure
+		Quicksort(VectorOfDistAndElem, q + 1, r); // calling quicksort recursively for the second part of the structure
 	}
 }
 
 //Overloaded quicksort algorithm
-void Quicksort(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r) // sortowanie szybkie
+void Quicksort(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r)
 {
 	int q;
 	if (p < r)
 	{
-		q = Partition(VectorOfAreaAndElem, p, r); // dzielimy strukture na dwie czesci; q oznacza punkt podzialu
-		Quicksort(VectorOfAreaAndElem, p, q); // wywolujemy rekurencyjnie quicksort dla pierwszej czesci struktury
-		Quicksort(VectorOfAreaAndElem, q + 1, r); // wywolujemy rekurencyjnie quicksort dla drugiej czesci struktury
+		q = Partition(VectorOfAreaAndElem, p, r); // we divide structure into 2 parts; q means separating point
+		Quicksort(VectorOfAreaAndElem, p, q); // calling quicksort recursively for the first part of the structure
+		Quicksort(VectorOfAreaAndElem, q + 1, r); // calling quicksort recursively for the second part of the structure
 	}
 }
 
@@ -409,7 +410,6 @@ std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contou
 }
 
 
-
 std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision)
 {
 	vector< vector <Point> > contours_approxed;
@@ -491,12 +491,12 @@ double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 	{
 		if (n % 2 == 1)
 		{
-			MiddleElementIndex = (n - 1) / 2;
+			MiddleElementIndex = (int)(n - 1) / 2;
 			median = VectorOfAreaAndElem[MiddleElementIndex].dArea;
 		}
 		else
 		{
-			MiddleElementIndex = n / 2;
+			MiddleElementIndex = (int)n / 2;
 			median = (VectorOfAreaAndElem[MiddleElementIndex].dArea + VectorOfAreaAndElem[MiddleElementIndex - 1].dArea) / 2;
 		}
 	}
@@ -519,13 +519,13 @@ int Median(std::vector<int> color_jellies)
 	{
 		if (n % 2 == 1)
 		{
-			MiddleElementIndex = (n - 1) / 2;
+			MiddleElementIndex = (int)(n - 1) / 2;
 			median = color_jellies[MiddleElementIndex];
 		}
 		else
 		{
-			MiddleElementIndex = n / 2;
-			median = round((color_jellies[MiddleElementIndex] + color_jellies[MiddleElementIndex - 1]) / 2);
+			MiddleElementIndex = (int)n / 2;
+			median = (int)round((color_jellies[MiddleElementIndex] + color_jellies[MiddleElementIndex - 1]) / 2);
 		}
 	}
 	else if (n == 1)
@@ -549,7 +549,7 @@ int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 	{
 		for (size_t i = 0; i < VectorOfAreaAndElem.size(); i++)
 		{
-			iNumberOfJellies = iNumberOfJellies + round(VectorOfAreaAndElem[i].dArea / dMedian);
+			iNumberOfJellies = iNumberOfJellies + (int)round(VectorOfAreaAndElem[i].dArea / dMedian);
 		}
 	}
 	return iNumberOfJellies;
@@ -561,7 +561,7 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	int dilation_erosion_size = 3, iNumberOfJellies = 0;
 	vector< vector <Point> > contours_jelly, contours_jelly_reduced;
 	vector<AreaAndElemNumber> VectorOfAreaAndElem;
-	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary, LowerOrangeRange, UpperOrangeRange;
+	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary;
 
 	// from OpenCV documentaion
 	StructuringElement = getStructuringElement(MORPH_ELLIPSE,
@@ -572,9 +572,6 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	{
 	case WHITE:
 	{
-		/*LowerColorRange = Scalar(11, 50, 100);
-		UpperColorRange = Scalar(24, 150, 255);*/
-
 		LowerColorRange = Scalar(11, 50, 103);
 		UpperColorRange = Scalar(24, 150, 206);
 
@@ -582,16 +579,12 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	}
 	case YELLOW:
 	{
-		/*LowerColorRange = Scalar(15, 150, 120);
-		UpperColorRange = Scalar(45, 255, 255);*/
-
 		LowerColorRange = Scalar(15, 163, 107);
 		UpperColorRange = Scalar(47, 243, 205);
 		break;
 	}
 	case ORANGE:
 	{
-
 		LowerColorRange = Scalar(6, 116, 82);
 		UpperColorRange = Scalar(15, 255, 255);
 		break;
@@ -604,8 +597,6 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 
 		LowerLightRedSecondary = Scalar(178, 152, 115);
 		HigherLightRedSecondary = Scalar(180, 255, 255);
-
-
 		break;
 	}
 	case DARK_RED:
@@ -629,19 +620,11 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 		inRange(warp_hsv, LowerLightRedSecondary, HigherLightRedSecondary, light_red_secondary);
 		dest_hsv = dest_hsv + light_red_secondary;
 	}
-	//operacja otwarcia wedlug dokumentacji OpenCV
+	//opening operation from OpenCV documentation
 	erode(dest_hsv, erode_output, StructuringElement, cv::Point(-1, -1), 1);
 	dilate(erode_output, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
 	findContours(dilate_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
 	contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 600, 25000);
-
-	Scalar color2(255, 255, 255);
-	for (int i = 0; i < contours_jelly_reduced.size(); i++)
-	{
-		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
-		drawContours(dilate_output, contours_jelly_reduced, i, color2, 2, 8);
-
-	}
 
 	if (contours_jelly_reduced.size() > 0)
 	{
@@ -659,10 +642,8 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 
 int main(int, char)
 {
-	//namedWindow("okno", 1);
-	//namedWindow("okno2", 1);
 
-	//odczyt pliku tekstowego
+	//reading text file - from tutorial: https://www.youtube.com/watch?v=h2Taf16gQDI
 	vector<string> nazwy_obrazkow;
 	vector<int> nr_sceny;
 	int scena_int;
@@ -684,7 +665,7 @@ int main(int, char)
 	plik.close();
 
 
-	//ladowanie obrazkow do wektora Mat i skalowanie ich
+	//loading images to the vector<Mat> (with resizing) 
 	vector <Mat> frames, frames_hsv;
 	Mat temp_frame, temp_frame_grey, temp_frame_hsv;
 
@@ -720,7 +701,7 @@ int main(int, char)
 	for (size_t iCounter = 0; iCounter < frames.size(); iCounter++)
 
 	{
-		Mat threshold_img, StructuringElement, dilation_dst, warp_hsv, transform_matrix, erode_dst, test, dest_hsv, dilate_output, erode_output;
+		Mat threshold_img, StructuringElement, dilation_dst, warp_hsv, transform_matrix, erode_dst;
 		int dilation_erosion_size = 3;
 		vector< vector <Point> > contours, contours_reduced, contours_reduced_2, contours_reduced_3, contours_approxed;
 		float radius = 0.0;
@@ -772,17 +753,6 @@ int main(int, char)
 			contours_reduced_3 = contours_reduced_2;
 			mc3 = mc2;
 		}
-
-		/*Scalar color(255, 255, 255);
-		for (int i = 0; i < contours_reduced_3.size(); i++)
-		{
-		//drawContours(dilation_dst, contours, i, color, CV_FILLED);
-		drawContours(erode_dst, contours_reduced_3, i, color, 2, 8);
-		Mat resized2;
-		resized2.create(frames[iCounter].rows / 2, frames[iCounter].cols / 2, frames[iCounter].type());
-		cv::resize(erode_dst, test, resized2.size());
-
-		}*/
 
 		oCenterPoint = CalculateCenterPointOfPoints(mc3);
 		mc3_related = RelateVectorOfPointsToTheCenterPoint(mc3, oCenterPoint);
@@ -883,25 +853,30 @@ int main(int, char)
 				dark_red_jellies.push_back(iDarkRedJellies);
 				green_jellies.push_back(iGreenJellies);
 
-				output_file << "c, j, zi, p, b, zol " << endl;
-
 				if (frames.size() == 1)
 				{
-
+					output_file << MiddleDarkRed << ", " << MiddleLightRed << ", " << MiddleGreen << ", " << MiddleOrange << ", " << MiddleWhite << ", " << MiddleYellow << endl;
 				}
 			}
 
 		}
-		else
-		{
 
-		}
 	}
 
 	output_file.close();
 	cout << "Zapis wynikow do pliku zakonczony." << endl;
-	//imshow("okno2", test);
-	//imshow("okno", erode_output);
+
+	white_jellies.clear();
+	yellow_jellies.clear();
+	orange_jellies.clear();
+	light_red_jellies.clear();
+	dark_red_jellies.clear();
+	green_jellies.clear();
+
+	frames.clear();
+	frames_hsv.clear();
+	nazwy_obrazkow.clear();
+	nr_sceny.clear();
 
 	waitKey();
 	return 0;
