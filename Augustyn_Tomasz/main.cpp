@@ -860,6 +860,24 @@ int main(int, char)
 			}
 
 		}
+		else if (iCounter == (frames.size() - 1))
+		{
+			std::sort(white_jellies.begin(), white_jellies.end());
+			std::sort(yellow_jellies.begin(), yellow_jellies.end());
+			std::sort(orange_jellies.begin(), orange_jellies.end());
+			std::sort(light_red_jellies.begin(), light_red_jellies.end());
+			std::sort(dark_red_jellies.begin(), dark_red_jellies.end());
+			std::sort(green_jellies.begin(), green_jellies.end());
+
+			MiddleWhite = Median(white_jellies);
+			MiddleYellow = Median(yellow_jellies);
+			MiddleOrange = Median(orange_jellies);
+			MiddleLightRed = Median(light_red_jellies);
+			MiddleDarkRed = Median(dark_red_jellies);
+			MiddleGreen = Median(green_jellies);
+
+			output_file << MiddleDarkRed << ", " << MiddleLightRed << ", " << MiddleGreen << ", " << MiddleOrange << ", " << MiddleWhite << ", " << MiddleYellow << endl;
+		}
 
 	}
 
