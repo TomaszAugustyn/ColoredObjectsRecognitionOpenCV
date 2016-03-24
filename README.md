@@ -7,8 +7,8 @@ Machine vision (image processing) project for detection and counting colored obj
 
 PURPOSE:
   The goal of the project is to count colorful haribo jellies on the various scenes inside particular area delimited by 3 types of markers. Every scene is captured from different perspectives, called frames. We assume that:
-a) Longer edge of the marker takes over 1/3 width of a picture
-b) The angle between camera optical axis and surface isn't greater than 30 degrees.
+- Longer edge of the marker takes over 1/3 width of a picture
+- The angle between camera optical axis and surface isn't greater than 30 degrees.
 
 INPUT FILES:
   All folders have to be in the same catalog as the executable file. The names of the pictures are located in the file 'pictures_names.txt', inside 'pictures_names' folder. Pictures are placed in 'pictures' folder. 
