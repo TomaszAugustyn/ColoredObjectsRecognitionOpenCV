@@ -16,29 +16,29 @@ struct AngleAndElemNumber;
 struct DistanceAndElemNumber;
 struct AreaAndElemNumber;
 enum JellyColors;
-Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc2);
-std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> mc2, Point2f oCenterPoint);
-std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> mc2_related);
-std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f> mc2, cv::Mat frame);
-int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
-int Partition(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r);
+Point2f CalculateCenterPointOfPoints( std::vector<Point2f> mc2 );
+std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint( std::vector<Point2f> mc2, Point2f oCenterPoint );
+std::vector<AngleAndElemNumber> ConvertToPolarCoordinates( std::vector<Point2f> mc2_related );
+std::vector<DistanceAndElemNumber> CalculateDistanceToCenter( std::vector<Point2f> mc2, cv::Mat frame );
+int Partition( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r );
+int Partition( std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r );
 int Partition(std::vector<DistanceAndElemNumber> &VectorOfAreaAndElem, int p, int r);
-void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r);
-void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r);
+void Quicksort( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r );
+void Quicksort( std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r );
 void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfAreaAndElem, int p, int r);
-std::vector<Point2f> RemoveContoursFarestFromCenter(std::vector<DistanceAndElemNumber> VectorOfDistAndElem, std::vector<Point2f> mc2, std::vector< vector <Point> > contours_reduced_2, std::vector< vector <Point> > &contours_reduced_3);
-std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2);
-std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold);
-std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius);
+std::vector<Point2f> RemoveContoursFarestFromCenter( std::vector<DistanceAndElemNumber> VectorOfDistAndElem, std::vector<Point2f> mc2, std::vector< vector <Point> > contours_reduced_2, std::vector< vector <Point> > &contours_reduced_3 );
+std::vector<Point2f> EnumerateVerticiesClockwise( std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc2 );
+std::vector< vector <Point> > RemoveSmallAndBigContours( std::vector< vector <Point> > contours, double dLowerAreaThreshold, double dHigherAreaThreshold );
+std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen( std::vector< vector <Point> > contours_reduced, double MinimumRadius );
 std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contours_reduced_2);
-std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision);
-double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours_approxed);
-std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed);
-std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point> > contours_jelly_reduced);
-double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
-int Median(std::vector<int> color_jellies);
-int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem);
-int CountColorJelly(cv::Mat warp_hsv, int color);
+std::vector< vector <Point> > ApproximateContours( std::vector< vector <Point> > contours_reduced_2, double precision );
+double GetAverageNrOfPointsForContoursSet( std::vector< vector <Point> > contours_approxed );
+std::vector<Point2f> GetTargetPointsDependingOnMarkerType( std::vector< vector <Point> > contours_approxed );
+std::vector<AreaAndElemNumber> CalculateContoursArea( std::vector< vector <Point> > contours_jelly_reduced );
+double Median( std::vector<AreaAndElemNumber> VectorOfAreaAndElem );
+int Median( std::vector<int> color_jellies );
+int CountJellies( std::vector<AreaAndElemNumber> VectorOfAreaAndElem );
+int CountColorJelly( cv::Mat warp_hsv, int color );
 
 //structure used in sorting algorithm (quicksort)
 struct AngleAndElemNumber
@@ -71,7 +71,7 @@ enum JellyColors
 	GREEN = 5
 };
 
-Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc3)
+Point2f CalculateCenterPointOfPoints( std::vector<Point2f> mc3 )
 {
 	size_t iNumberOfPoints = mc3.size();
 	float dCenterX = 0, dCenterY = 0;
@@ -91,7 +91,7 @@ Point2f CalculateCenterPointOfPoints(std::vector<Point2f> mc3)
 
 }
 
-std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> mc3, Point2f oCenterPoint)
+std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint( std::vector<Point2f> mc3, Point2f oCenterPoint )
 {
 	std::vector<Point2f> mc3_related;
 	size_t iNumberOfPoints = mc3.size();
@@ -107,36 +107,36 @@ std::vector<Point2f> RelateVectorOfPointsToTheCenterPoint(std::vector<Point2f> m
 
 }
 
-std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> mc3_related)
+std::vector<AngleAndElemNumber> ConvertToPolarCoordinates( std::vector<Point2f> mc3_related )
 {
 	size_t iNumberOfPoints = mc3_related.size();
 	std::vector<AngleAndElemNumber> VectorOfAngleAndElem;
 	AngleAndElemNumber TempStruct;
 	float tempX = 0.0, tempY = 0.0;
 
-	for (size_t i = 0; i < iNumberOfPoints; i++)
+	for ( size_t i = 0; i < iNumberOfPoints; i++ )
 	{
 		TempStruct.iElementNumber = (int)i;
 		tempX = mc3_related[i].x;
 		tempY = mc3_related[i].y;
 
-		if ((tempX > 0) && (tempY >= 0))
+		if ( ( tempX > 0 ) && ( tempY >= 0 ) )
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX);
 		}
-		else if ((tempX > 0) && (tempY < 0))
+		else if ( ( tempX > 0) && (tempY < 0 ) )
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX) + 2 * M_PI;
 		}
-		else if (tempX < 0)
+		else if ( tempX < 0 )
 		{
 			TempStruct.dPolarAngle = atan(tempY / tempX) + M_PI;
 		}
-		else if ((tempX == 0) && (tempY > 0))
+		else if ( (tempX == 0) && (tempY > 0) )
 		{
 			TempStruct.dPolarAngle = M_PI / 2;
 		}
-		else if ((tempX == 0) && (tempY < 0))
+		else if ( (tempX == 0) && (tempY < 0) )
 		{
 			TempStruct.dPolarAngle = 3 * M_PI / 2;
 		}
@@ -145,13 +145,13 @@ std::vector<AngleAndElemNumber> ConvertToPolarCoordinates(std::vector<Point2f> m
 			TempStruct.dPolarAngle = 0;
 		}
 
-		VectorOfAngleAndElem.push_back(TempStruct);
+		VectorOfAngleAndElem.push_back( TempStruct );
 	}
 
 	return VectorOfAngleAndElem;
 }
 
-std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f> mc2, cv::Mat frame)
+std::vector<DistanceAndElemNumber> CalculateDistanceToCenter( std::vector<Point2f> mc2, cv::Mat frame )
 {
 	size_t iNumberOfPoints = mc2.size();
 	std::vector<DistanceAndElemNumber> VectorOfDistAndElem;
@@ -160,7 +160,7 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 	double CenterX = frame.cols / 2;
 	double CenterY = frame.rows / 2;
 	double distance = 0.0;
-
+	
 
 	for (size_t i = 0; i < iNumberOfPoints; i++)
 	{
@@ -177,7 +177,7 @@ std::vector<DistanceAndElemNumber> CalculateDistanceToCenter(std::vector<Point2f
 
 
 //Overloaded partition function
-int Partition(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r) //we divide structure in 2 parts, in the first one all angle degrees are less or equal to x, in the second one greater or equal to x
+int Partition( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r ) //we divide structure in 2 parts, in the first one all angle degrees are less or equal to x, in the second one greater or equal to x
 {
 	double x = VectorOfAngleAndElem[p].dPolarAngle; // we take x
 	int i = p, j = r, index; // i, j - indexes in structure
@@ -267,7 +267,7 @@ int Partition(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r)
 }
 
 //Overloaded quicksort algorithm
-void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r)
+void Quicksort( std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int r )
 {
 	int q;
 	if (p < r)
@@ -279,7 +279,7 @@ void Quicksort(std::vector<AngleAndElemNumber> &VectorOfAngleAndElem, int p, int
 }
 
 //Overloaded quicksort algorithm
-void Quicksort(std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r)
+void Quicksort( std::vector<DistanceAndElemNumber> &VectorOfDistAndElem, int p, int r )
 {
 	int q;
 	if (p < r)
@@ -302,15 +302,15 @@ void Quicksort(std::vector<AreaAndElemNumber> &VectorOfAreaAndElem, int p, int r
 	}
 }
 
-std::vector<Point2f> RemoveContoursFarestFromCenter(std::vector<DistanceAndElemNumber> VectorOfDistAndElem, std::vector<Point2f> mc2,
-	std::vector< vector <Point> > contours_reduced_2, std::vector< vector <Point> > &contours_reduced_3)
+std::vector<Point2f> RemoveContoursFarestFromCenter( std::vector<DistanceAndElemNumber> VectorOfDistAndElem, std::vector<Point2f> mc2,
+													 std::vector< vector <Point> > contours_reduced_2, std::vector< vector <Point> > &contours_reduced_3 )
 {
 	size_t iNumberOfPoints = VectorOfDistAndElem.size();
 	std::vector<Point2f> mc3;
 	int ElementNr;
 	Point2f TempPoint;
-
-	if (iNumberOfPoints >= 4)
+	
+	if ( iNumberOfPoints >= 4 )
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
@@ -328,7 +328,7 @@ std::vector<Point2f> RemoveContoursFarestFromCenter(std::vector<DistanceAndElemN
 
 }
 
-std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc3)
+std::vector<Point2f> EnumerateVerticiesClockwise( std::vector<AngleAndElemNumber> VectorOfAngleAndElem, std::vector<Point2f> mc3 )
 {
 	size_t iNumberOfPoints = VectorOfAngleAndElem.size();
 	std::vector<Point2f> mc2_clockwise;
@@ -340,7 +340,7 @@ std::vector<Point2f> EnumerateVerticiesClockwise(std::vector<AngleAndElemNumber>
 		ElementNr = VectorOfAngleAndElem[i].iElementNumber;
 		TempPoint.x = mc3[ElementNr].x;
 		TempPoint.y = mc3[ElementNr].y;
-		mc2_clockwise.push_back(TempPoint);
+		mc2_clockwise.push_back( TempPoint );
 	}
 
 	return mc2_clockwise;
@@ -364,19 +364,19 @@ std::vector< vector <Point> > RemoveSmallAndBigContours(std::vector< vector <Poi
 	return contours_reduced;
 }
 
-std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vector <Point> > contours_reduced, double MinimumRadius)
+std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen( std::vector< vector <Point> > contours_reduced, double MinimumRadius )
 {
 	vector< vector <Point> > contours_reduced_2;
 	Point2f center;
 	float radius = 0.0;
 
-	if (contours_reduced.size() > 4)
+	if ( contours_reduced.size() > 4 )
 	{
 		for (size_t i = 0; i < contours_reduced.size(); i++)
 		{
 			vector<Point> contour = contours_reduced[i];
 			minEnclosingCircle(contour, center, radius);
-			if (radius > MinimumRadius)
+			if ( radius > MinimumRadius )
 			{
 				contours_reduced_2.push_back(contour);
 			}
@@ -386,7 +386,7 @@ std::vector< vector <Point> > RemoveObjEnclosingCircleLessThen(std::vector< vect
 	else
 	{
 		return contours_reduced;
-	}
+	}	
 }
 
 std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contours_reduced_2)
@@ -410,7 +410,7 @@ std::vector<Point2f> GetContoursMassCenters(std::vector< vector <Point> > contou
 }
 
 
-std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > contours_reduced_2, double precision)
+std::vector< vector <Point> > ApproximateContours( std::vector< vector <Point> > contours_reduced_2, double precision )
 {
 	vector< vector <Point> > contours_approxed;
 	vector<Point> contour_approx;
@@ -425,7 +425,7 @@ std::vector< vector <Point> > ApproximateContours(std::vector< vector <Point> > 
 	return contours_approxed;
 }
 
-double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours_approxed)
+double GetAverageNrOfPointsForContoursSet( std::vector< vector <Point> > contours_approxed )
 {
 	double dAvarageNumberOfPoints = 0.0;
 	for (size_t i = 0; i < contours_approxed.size(); i++)
@@ -437,12 +437,12 @@ double GetAverageNrOfPointsForContoursSet(std::vector< vector <Point> > contours
 	return dAvarageNumberOfPoints;
 }
 
-std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <Point> > contours_approxed)
+std::vector<Point2f> GetTargetPointsDependingOnMarkerType( std::vector< vector <Point> > contours_approxed )
 {
 	Point2f Point1, Point2, Point3, Point4;
 	std::vector<Point2f> TargetPoints;
-	double dAvarageNumberOfPoints = GetAverageNrOfPointsForContoursSet(contours_approxed);
-	if (dAvarageNumberOfPoints < 5.0)
+	double dAvarageNumberOfPoints = GetAverageNrOfPointsForContoursSet( contours_approxed );
+	if ( dAvarageNumberOfPoints < 5.0 )
 	{
 		Point1.x = 445; Point1.y = 0;
 		Point2.x = 890; Point2.y = 315;
@@ -465,7 +465,7 @@ std::vector<Point2f> GetTargetPointsDependingOnMarkerType(std::vector< vector <P
 	return TargetPoints;
 }
 
-std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point> > contours_jelly_reduced)
+std::vector<AreaAndElemNumber> CalculateContoursArea( std::vector< vector <Point> > contours_jelly_reduced )
 {
 	std::vector<AreaAndElemNumber> VectorOfAreaAndElem;
 	AreaAndElemNumber TempStruct;
@@ -474,7 +474,7 @@ std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point>
 	{
 		vector<Point> contour = contours_jelly_reduced[i];
 		TempStruct.iElementNumber = i;
-		TempStruct.dArea = contourArea(contour);
+		TempStruct.dArea = contourArea( contour );
 
 		VectorOfAreaAndElem.push_back(TempStruct);
 	}
@@ -482,7 +482,7 @@ std::vector<AreaAndElemNumber> CalculateContoursArea(std::vector< vector <Point>
 	return VectorOfAreaAndElem;
 }
 
-double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
+double Median( std::vector<AreaAndElemNumber> VectorOfAreaAndElem )
 {
 	double median = 0.0;
 	int MiddleElementIndex = 0; //remember vector starts from 0 index, modified median algorithm needed
@@ -497,7 +497,7 @@ double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 		else
 		{
 			MiddleElementIndex = (int)n / 2;
-			median = (VectorOfAreaAndElem[MiddleElementIndex].dArea + VectorOfAreaAndElem[MiddleElementIndex - 1].dArea) / 2;
+			median = ( VectorOfAreaAndElem[MiddleElementIndex].dArea + VectorOfAreaAndElem[MiddleElementIndex - 1].dArea ) / 2;
 		}
 	}
 	else if (n == 1)
@@ -510,7 +510,7 @@ double Median(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 }
 
 //overloaded median function
-int Median(std::vector<int> color_jellies)
+int Median( std::vector<int> color_jellies )
 {
 	int median = 0, MiddleElementIndex = 0;  //remember vector starts from 0 index, modified median algorithm needed
 	size_t n = color_jellies.size();
@@ -520,12 +520,12 @@ int Median(std::vector<int> color_jellies)
 		if (n % 2 == 1)
 		{
 			MiddleElementIndex = (int)(n - 1) / 2;
-			median = color_jellies[MiddleElementIndex];
+			median = color_jellies[ MiddleElementIndex ];
 		}
 		else
 		{
 			MiddleElementIndex = (int)n / 2;
-			median = (int)round((color_jellies[MiddleElementIndex] + color_jellies[MiddleElementIndex - 1]) / 2);
+			median = (int)round( ( color_jellies[MiddleElementIndex] + color_jellies[MiddleElementIndex - 1] ) / 2 );
 		}
 	}
 	else if (n == 1)
@@ -537,10 +537,10 @@ int Median(std::vector<int> color_jellies)
 
 }
 
-int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
+int CountJellies( std::vector<AreaAndElemNumber> VectorOfAreaAndElem )
 {
 	int iNumberOfJellies = 0;
-	double dMedian = Median(VectorOfAreaAndElem);
+	double dMedian = Median( VectorOfAreaAndElem );
 	if (dMedian > 5000)
 	{
 		dMedian = 3480; // experimentaly matched
@@ -549,13 +549,13 @@ int CountJellies(std::vector<AreaAndElemNumber> VectorOfAreaAndElem)
 	{
 		for (size_t i = 0; i < VectorOfAreaAndElem.size(); i++)
 		{
-			iNumberOfJellies = iNumberOfJellies + (int)round(VectorOfAreaAndElem[i].dArea / dMedian);
+			iNumberOfJellies = iNumberOfJellies + (int)round( VectorOfAreaAndElem[i].dArea / dMedian );
 		}
 	}
 	return iNumberOfJellies;
 }
 
-int CountColorJelly(cv::Mat warp_hsv, int color)
+int CountColorJelly( cv::Mat warp_hsv, int color )
 {
 	Mat StructuringElement, dest_hsv, dilate_output, erode_output, light_red_secondary;
 	int dilation_erosion_size = 3, iNumberOfJellies = 0;
@@ -564,67 +564,67 @@ int CountColorJelly(cv::Mat warp_hsv, int color)
 	Scalar LowerColorRange, UpperColorRange, LowerLightRedSecondary, HigherLightRedSecondary;
 
 	// from OpenCV documentaion
-	StructuringElement = getStructuringElement(MORPH_ELLIPSE,
+	StructuringElement = getStructuringElement( MORPH_ELLIPSE,
 		Size(2 * dilation_erosion_size + 1, 2 * dilation_erosion_size + 1),
 		Point(dilation_erosion_size, dilation_erosion_size));
 
 	switch (color)
 	{
-	case WHITE:
-	{
-		LowerColorRange = Scalar(11, 50, 103);
-		UpperColorRange = Scalar(24, 150, 206);
+		case WHITE:
+		{
+			LowerColorRange = Scalar(11, 50, 103);
+			UpperColorRange = Scalar(24, 150, 206);
 
-		break;
-	}
-	case YELLOW:
-	{
-		LowerColorRange = Scalar(15, 163, 107);
-		UpperColorRange = Scalar(47, 243, 205);
-		break;
-	}
-	case ORANGE:
-	{
-		LowerColorRange = Scalar(6, 116, 82);
-		UpperColorRange = Scalar(15, 255, 255);
-		break;
-	}
-	case LIGHT_RED:
-	{
-		//Light red jelly in hsv consists of 2 colors (turquoise and green) - 2 ranges necessery
-		LowerColorRange = Scalar(0, 165, 111);
-		UpperColorRange = Scalar(5, 255, 255);
+			break;
+		}
+		case YELLOW:
+		{
+			LowerColorRange = Scalar(15, 163, 107);
+			UpperColorRange = Scalar(47, 243, 205);
+			break;
+		}
+		case ORANGE:
+		{
+			LowerColorRange = Scalar(6, 116, 82);
+			UpperColorRange = Scalar(15, 255, 255);
+			break;
+		}
+		case LIGHT_RED:
+		{
+			//Light red jelly in hsv consists of 2 colors (turquoise and green) - 2 ranges necessery
+			LowerColorRange = Scalar(0, 165, 111);
+			UpperColorRange = Scalar(5, 255, 255);
 
-		LowerLightRedSecondary = Scalar(178, 152, 115);
-		HigherLightRedSecondary = Scalar(180, 255, 255);
-		break;
+			LowerLightRedSecondary = Scalar(178, 152, 115);
+			HigherLightRedSecondary = Scalar(180, 255, 255);
+			break;
+		}
+		case DARK_RED:
+		{
+			LowerColorRange = Scalar(165, 115, 60);
+			UpperColorRange = Scalar(179, 240, 132);
+			break;
+		}
+		case GREEN:
+		{
+			LowerColorRange = Scalar(8, 77, 0);
+			UpperColorRange = Scalar(56, 255, 124);
+			break;
+		}
 	}
-	case DARK_RED:
-	{
-		LowerColorRange = Scalar(165, 115, 60);
-		UpperColorRange = Scalar(179, 240, 132);
-		break;
-	}
-	case GREEN:
-	{
-		LowerColorRange = Scalar(8, 77, 0);
-		UpperColorRange = Scalar(56, 255, 124);
-		break;
-	}
-	}
-
-	inRange(warp_hsv, LowerColorRange, UpperColorRange, dest_hsv);
+	
+	inRange( warp_hsv, LowerColorRange, UpperColorRange, dest_hsv );
 	//special case for light red jelly
-	if (color == LIGHT_RED)
+	if ( color == LIGHT_RED )
 	{
-		inRange(warp_hsv, LowerLightRedSecondary, HigherLightRedSecondary, light_red_secondary);
+		inRange( warp_hsv, LowerLightRedSecondary, HigherLightRedSecondary, light_red_secondary );
 		dest_hsv = dest_hsv + light_red_secondary;
 	}
 	//opening operation from OpenCV documentation
-	erode(dest_hsv, erode_output, StructuringElement, cv::Point(-1, -1), 1);
+	erode( dest_hsv, erode_output, StructuringElement, cv::Point(-1, -1), 1 );
 	dilate(erode_output, dilate_output, StructuringElement, cv::Point(-1, -1), 1);
 	findContours(dilate_output, contours_jelly, RETR_TREE, CHAIN_APPROX_SIMPLE);
-	contours_jelly_reduced = RemoveSmallAndBigContours(contours_jelly, 600, 25000);
+	contours_jelly_reduced = RemoveSmallAndBigContours( contours_jelly, 600, 25000 );
 
 	if (contours_jelly_reduced.size() > 0)
 	{
@@ -650,14 +650,14 @@ int main(int, char)
 	string pojedyncza_linia, scena_str;
 	fstream plik;
 	plik.open("nazwy_zdjec/nazwy_zdjec.txt", ios::in);
-	if (plik.good() == false)
+	if ( plik.good() == false )
 	{
 		cout << "Podany plik nie istnieje lub podales bledna sciezke!" << endl;
 		exit(0);
 	}
-	while (getline(plik, pojedyncza_linia))
-	{
-		nazwy_obrazkow.push_back(pojedyncza_linia);
+	while ( getline( plik, pojedyncza_linia ) )
+	{	
+		nazwy_obrazkow.push_back( pojedyncza_linia );
 		scena_str = pojedyncza_linia.substr(6, 3);
 		scena_int = stoi(scena_str);
 		nr_sceny.push_back(scena_int);
@@ -670,7 +670,7 @@ int main(int, char)
 	Mat temp_frame, temp_frame_grey, temp_frame_hsv;
 
 
-	for (size_t i = 0; i < nazwy_obrazkow.size(); i++)
+	for ( size_t i = 0; i < nazwy_obrazkow.size(); i++ )
 	{
 		temp_frame = imread("zdjecia/" + nazwy_obrazkow[i], CV_LOAD_IMAGE_COLOR);
 		cvtColor(temp_frame, temp_frame_grey, CV_BGR2GRAY);
@@ -687,7 +687,7 @@ int main(int, char)
 			resized.create(2080, 1170, temp_frame_grey.type());
 			resized2.create(2080, 1170, temp_frame_hsv.type());
 		}
-
+		
 		cv::resize(temp_frame_grey, resized, resized.size());
 		cv::resize(temp_frame_hsv, resized2, resized2.size());
 		frames.push_back(resized);
@@ -823,7 +823,7 @@ int main(int, char)
 
 				}
 
-				if (iCounter == (frames.size() - 1))
+				if ( iCounter == (frames.size() - 1) )
 				{
 					std::sort(white_jellies.begin(), white_jellies.end());
 					std::sort(yellow_jellies.begin(), yellow_jellies.end());
@@ -846,14 +846,14 @@ int main(int, char)
 			else
 			{
 
-				white_jellies.push_back(iWhiteJellies);
-				yellow_jellies.push_back(iYellowJellies);
-				orange_jellies.push_back(iOrangeJellies);
-				light_red_jellies.push_back(iLightRedJellies);
-				dark_red_jellies.push_back(iDarkRedJellies);
-				green_jellies.push_back(iGreenJellies);
+				white_jellies.push_back( iWhiteJellies );
+				yellow_jellies.push_back( iYellowJellies );
+				orange_jellies.push_back( iOrangeJellies );
+				light_red_jellies.push_back( iLightRedJellies );
+				dark_red_jellies.push_back( iDarkRedJellies );
+				green_jellies.push_back( iGreenJellies );
 
-				if (frames.size() == 1)
+				if ( frames.size() == 1 )
 				{
 					output_file << MiddleDarkRed << ", " << MiddleLightRed << ", " << MiddleGreen << ", " << MiddleOrange << ", " << MiddleWhite << ", " << MiddleYellow << endl;
 				}
@@ -882,7 +882,7 @@ int main(int, char)
 	}
 
 	output_file.close();
-	cout << "Zapis wynikow do pliku zakonczony." << endl;
+	cout << "Zapis wynikow do pliku zakonczony."<<endl;
 
 	white_jellies.clear();
 	yellow_jellies.clear();
